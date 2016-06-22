@@ -10,6 +10,10 @@ interface AudioReceiver extends Runnable {
     void addListener(AudioListener listener); // no pun intended
     void removeListener();
 
+    int getBufferSize();
+    int getBufferSizeInBytes();
+    int getFrameSize();
+
     interface AudioListener {
         void onAudio(ByteBuffer buffer);
     }
