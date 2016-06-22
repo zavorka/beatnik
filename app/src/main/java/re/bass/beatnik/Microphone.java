@@ -5,4 +5,13 @@ package re.bass.beatnik;
  */
 
 public class Microphone extends Thread implements AudioReceiver {
+    @Override
+    public void addListener(AudioListener listener) {
+        
+    }
+
+    @Override
+    public void removeListener() {
+
+    }
 }
