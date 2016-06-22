@@ -8,7 +8,7 @@ import java.nio.ByteBuffer;
 
 interface AudioReceiver extends Runnable {
     void addListener(AudioListener listener); // no pun intended
-    void removeListener();
+    void removeListener(AudioListener listener);
 
     int getBufferSize();
     int getBufferSizeInBytes();

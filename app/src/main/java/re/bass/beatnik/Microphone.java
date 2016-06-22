@@ -7,6 +7,8 @@ import android.media.MediaRecorder;
 import android.os.Process;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by curly on 22/06/2016.
@@ -28,6 +30,7 @@ class Microphone extends Thread implements AudioReceiver
     private ByteBuffer buffer;
     private int bufferSize = 0;
 
+    private List<AudioListener> listeners = new ArrayList<>();
 
     Microphone() {
         buffer = ByteBuffer.allocateDirect(getBufferSizeInBytes());
@@ -53,19 +56,27 @@ class Microphone extends Thread implements AudioReceiver
 
         while (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
             record.read(buffer, 0, AudioRecord.READ_BLOCKING);
-            // TODO notify listeners
+            synchronized (this) {
+                for (AudioListener listener : listeners) {
+                    listener.onAudio(buffer);
+                }
+            }
             // TODO processAudio(audioData);
         }
     }
 
     @Override
     public void addListener(AudioListener listener) {
-
+        synchronized (this) {
+            listeners.add(listener);
+        }
     }
 
     @Override
-    public void removeListener() {
-
+    public void removeListener(AudioListener listener) {
+        synchronized (this) {
+            listeners.remove(listener);
+        }
     }
 
     @Override
