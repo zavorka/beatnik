@@ -3,6 +3,8 @@ package re.bass.beatnik;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
+import java.nio.ByteBuffer;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
@@ -11,8 +13,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Microphone microphone = new Microphone();
+        microphone.addListener(new AudioReceiver.AudioListener() {
+            @Override
+            public void onAudio(ByteBuffer buffer) {
+                processAudio(buffer);
+            }
+        });
+
         microphone.run();
     }
+
+    private native double processAudio(ByteBuffer buffer);
 
     // Used to load the 'native-lib' library on application startup.
     static {
