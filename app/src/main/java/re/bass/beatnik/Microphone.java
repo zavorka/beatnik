@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
  * Created by curly on 22/06/2016.
  */
 
-public class Microphone extends Thread implements AudioReceiver
+class Microphone extends Thread implements AudioReceiver
 {
     // private final static ... how could you possibly not love Java?
     private final static int SAMPLE_RATE = 44100;
@@ -29,7 +29,7 @@ public class Microphone extends Thread implements AudioReceiver
     private int bufferSize = 0;
 
 
-    public Microphone() {
+    Microphone() {
         buffer = ByteBuffer.allocateDirect(getBufferSizeInBytes());
 
         record = new AudioRecord.Builder()
