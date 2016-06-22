@@ -3,12 +3,11 @@
 #include <android/log.h>
 
 extern "C"
-jstring
-Java_re_bass_beatnik_MainActivity_stringFromJNI(
+void
+Java_re_bass_beatnik_MainActivity_init(
         JNIEnv* env,
         jobject /* this */) {
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
+
 }
 
 extern "C"

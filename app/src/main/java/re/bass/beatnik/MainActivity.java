@@ -12,6 +12,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        init();
+
         Microphone microphone = new Microphone();
         microphone.addListener(new AudioReceiver.AudioListener() {
             @Override
@@ -23,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
         microphone.run();
     }
 
+    private native void init();
     private native double processAudio(ByteBuffer buffer);
 
     // Used to load the 'native-lib' library on application startup.
