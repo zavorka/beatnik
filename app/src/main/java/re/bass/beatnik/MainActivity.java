@@ -11,6 +11,8 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.widget.TextView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 public class MainActivity
         extends AppCompatActivity
@@ -24,14 +26,13 @@ public class MainActivity
 
     private Microphone microphone;
     private BeatAnalyzer analyzer;
-    private TextView textView;
+	@BindView(R.id.bmp_text) TextView bpmText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        textView = (TextView)findViewById(R.id.text_view);
+        ButterKnife.bind(this);
 
         initialize();
         getRecordingPermissionAndStart();
@@ -63,9 +64,9 @@ public class MainActivity
     }
 
     private void doNothing() {
-        assert textView != null;
-        textView.setText(R.string.nopeville);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        assert bpmText != null;
+        bpmText.setText(R.string.nopeville);
+        bpmText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
     }
 
     @Override
@@ -73,8 +74,8 @@ public class MainActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                assert textView != null;
-                textView.setText(getString(R.string.bpm_value, bpm));
+                assert bpmText != null;
+                bpmText.setText(getString(R.string.bpm_value, bpm));
             }
         });
     }
