@@ -18,21 +18,39 @@ namespace reBass
          * Currently the sample rate and increment are used only for the
          * conversion from beat frame location to bpm in the tempo array.
          */
-        Tracker(float sampleRate, size_t dfIncrement);
-        ~Tracker();
+        Tracker(
+                size_t dfIncrement,
+                unsigned int sample_rate
+        );
 
-        // Returned beat periods are given in df increment units; inputtempo and tempi in bpm
-        void calculateBeatPeriod(const vector<double> &df, vector<double> &beatPeriod);
+        // Returned beat periods are given in df increment units;
+        // inputtempo and tempi in bpm
+        void calculateBeatPeriod(
+                const vector<double> &df,
+                vector<double> &beatPeriod)
+        ;
 
         // Returned beat positions are given in df increment units
-        void calculateBeats(const vector<double> &df, const vector<double> &beatPeriod, vector<double> &beats);
+        void calculateBeats(
+                const vector<double> &df,
+                const vector<double> &beatPeriod,
+                vector<double> &beats
+        );
 
     private:
-        float mRate;
         size_t mIncrement;
+        unsigned int sample_rate;
 
-        void getRcf(const vector<double> &dfFrameIn, const vector<double> &wv, vector<double> &rcf);
-        void viterbiDecode(const vector<vector<double>> &rcfmat, const vector<double> &wv, vector<double> &beatPeriod);
+        void getRcf(
+                const vector<double> &dfFrameIn,
+                const vector<double> &wv,
+                vector<double> &rcf
+        );
+        void viterbiDecode(
+                const vector<vector<double>> &rcfmat,
+                const vector<double> &wv,
+                vector<double> &beatPeriod
+        );
         double getMaxValue(const vector<double> &df);
         int getMaxIndex(const vector<double> &df);
 

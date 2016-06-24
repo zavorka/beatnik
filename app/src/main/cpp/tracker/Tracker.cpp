@@ -27,7 +27,7 @@ namespace reBass
 
         // note: 60*44100/512 is a magic number
         // this might (will?) break if a user specifies a different frame rate for the onset detection function
-        double rayparam = (60 * 44100 / 512) / kInputTempo;
+        double rayparam = (60.0 * sample_rate / mIncrement) / kInputTempo;
 
         // make rayleigh weighting curve
         vector<double> wv(wvLen);
