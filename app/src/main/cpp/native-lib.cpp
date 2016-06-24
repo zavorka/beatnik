@@ -5,8 +5,8 @@
 #include <sys/types.h>
 
 #include "beatnik/FFT_rolling.hpp"
-#include "tracker/Beat_counter.hpp"
-
+#include "tracker/CSD_detection_function.hpp"
+#include "tracker/Tracker.hpp"
 
 #define TAG "beatnik"
 
@@ -17,15 +17,9 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR  , TAG,__VA_ARGS__)
 
 static reBass::FFT_rolling* fft;
-static reBass::Beat_counter* beat_counter;
+static reBass::CSD_detection_function* detection_function;
 
-static struct timespec now;
 static size_t called = 0;
-
-reBass::RealTime get_current_time() {
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return reBass::RealTime(now.tv_sec, now.tv_nsec);
-}
 
 extern "C"
 void
@@ -33,9 +27,14 @@ Java_re_bass_beatnik_DFAudioProcessor_init(
         JNIEnv* env,
         jobject object, /* this */
         jint sampleRate,
-        jint windowSize) {
+        jint stepSize,
+        jint windowSize
+) {
     fft = new reBass::FFT_rolling((size_t) windowSize);
-    beat_counter = new reBass::Beat_counter(sampleRate);
+    detection_function = new reBass::CSD_detection_function(
+            (size_t) windowSize,
+            (size_t) stepSize
+    );
 }
 
 extern "C"
@@ -48,11 +47,10 @@ Java_re_bass_beatnik_DFAudioProcessor_processAudio(
     jint size
 ) {
     auto buffer = ((const float* const) env->GetDirectBufferAddress(input)) + offset;
-    return beat_counter->process(
+    return detection_function->processFrequencyDomain(
             fft->compute_fft(
                     buffer,
                     (size_t) size
-            ),
-            get_current_time()
+            )
     );
 }

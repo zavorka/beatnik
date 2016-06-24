@@ -30,12 +30,12 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
         this.windowSize = windowSize;
     }
 
-    private native void init(int sampleRate, int windowSize);
+    private native void init(int sampleRate, int stepSize, int windowSize);
     private native double processAudio(FloatBuffer buffer, int offset, int size);
 
     @Override
     public void onStart() {
-        init(sampleRate, windowSize);
+        init(sampleRate, stepSize, windowSize);
         this.initialized = true;
     }
 
