@@ -7,6 +7,7 @@ import android.media.MediaRecorder;
 import android.os.Process;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,13 +15,10 @@ import java.util.List;
  * Created by curly on 22/06/2016.
  */
 
-class Microphone extends Thread implements AudioReceiver
+class Microphone extends Thread implements AudioInput
 {
-    // private final static ... how could you possibly not love Java?
-    private final static int SAMPLE_RATE = 44100;
-    private final static int STEP_SIZE = 512;
-    private final static int WINDOW_SIZE = 1024;
-    private final static short NUM_CHANNELS = 1;
+    private int sampleRate;
+    private int stepSize;
 
     private final static int AUDIO_SOURCE = MediaRecorder.AudioSource.MIC;
     private final static short ENCODING = AudioFormat.ENCODING_PCM_FLOAT;
@@ -30,16 +28,22 @@ class Microphone extends Thread implements AudioReceiver
     private ByteBuffer buffer;
     private int bufferSize = 0;
 
+    private boolean started = false;
+
     private List<AudioListener> listeners = new ArrayList<>();
 
-    Microphone() {
+    Microphone(int sampleRate, int stepSize) {
+        this.sampleRate = sampleRate;
+        this.stepSize = stepSize;
+
         buffer = ByteBuffer.allocateDirect(getBufferSizeInBytes());
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
 
         record = new AudioRecord.Builder()
                 .setAudioSource(AUDIO_SOURCE)
                 .setAudioFormat(new AudioFormat.Builder()
                         .setEncoding(ENCODING)
-                        .setSampleRate(SAMPLE_RATE)
+                        .setSampleRate(sampleRate)
                         .setChannelMask(CHANNEL_MASK)
                         .build()
                 )
@@ -50,12 +54,19 @@ class Microphone extends Thread implements AudioReceiver
     @Override
     public void run() {
         Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
+        synchronized (this) {
+            started = true;
+            for (AudioListener listener : listeners) {
+                listener.onStart();
+            }
+        }
         if (record.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
             record.startRecording();
         }
 
+
         while (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-            record.read(buffer, 0, AudioRecord.READ_BLOCKING);
+            record.read(buffer, buffer.capacity(), AudioRecord.READ_BLOCKING);
             synchronized (this) {
                 for (AudioListener listener : listeners) {
                     listener.onAudio(buffer);
@@ -99,15 +110,15 @@ class Microphone extends Thread implements AudioReceiver
 
     private int getPreferredBufferSize() {
         final int minSize = AudioTrack.getMinBufferSize(
-                SAMPLE_RATE,
+                sampleRate,
                 AudioFormat.CHANNEL_OUT_MONO,
-                ENCODING
+                AudioFormat.ENCODING_PCM_8BIT // get number of frames instead of bytes
         );
         int steps = 1;
-        while (STEP_SIZE * steps < minSize) {
+        while (stepSize * steps < minSize) {
             steps *= 2;
         }
 
-        return STEP_SIZE * steps;
+        return stepSize * steps;
     }
 }

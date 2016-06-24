@@ -3,30 +3,23 @@ package re.bass.beatnik;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import java.nio.ByteBuffer;
-
 public class MainActivity extends AppCompatActivity {
+
+    // private final static ... how could you possibly not love Java?
+    private final static int SAMPLE_RATE = 44100;
+    private final static int STEP_SIZE = 512;
+    private final static int WINDOW_SIZE = 1024;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        init();
+        Microphone microphone = new Microphone(SAMPLE_RATE, STEP_SIZE);
+        microphone.addListener(new NativeAudioListener(SAMPLE_RATE, STEP_SIZE, WINDOW_SIZE));
 
-        Microphone microphone = new Microphone();
-        microphone.addListener(new AudioReceiver.AudioListener() {
-            @Override
-            public void onAudio(ByteBuffer buffer) {
-                processAudio(buffer);
-            }
-        });
-
-        microphone.run();
+        microphone.start();
     }
-
-    private native void init();
-    private native double processAudio(ByteBuffer buffer);
 
     // Used to load the 'native-lib' library on application startup.
     static {
