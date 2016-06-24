@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">beatnik</string>
+    <string name="bpm_value">%1$f BPM</string>
 </resources>
