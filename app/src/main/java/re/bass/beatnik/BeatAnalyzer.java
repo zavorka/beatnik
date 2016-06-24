@@ -39,10 +39,16 @@ class BeatAnalyzer
         return ongoingAnalysis;
     }
 
-    private native void init(int sampleRate, int stepSize, int blockSize);
+
+    private native void init(
+            int sampleRate,
+            int stepSize,
+            int blockSize
+    );
     private native void enqueueDFValue(double dfValue);
     private native float getBPM();
     private native void clearData();
+
 
     @Override
     public void onProcessorOutput(double output) {
@@ -78,7 +84,7 @@ class BeatAnalyzer
                     latch = null;
                 }
             }
-        }, 10000, 5000);
+        }, 10000, 5000); // TODO fixme!
     }
 
     @Override
