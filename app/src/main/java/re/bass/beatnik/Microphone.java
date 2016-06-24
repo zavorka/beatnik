@@ -32,9 +32,9 @@ class Microphone extends Thread implements AudioInput
 
     private List<AudioListener> listeners = new ArrayList<>();
 
-    Microphone(int sampleRate, int stepSize) {
-        this.sampleRate = sampleRate;
-        this.stepSize = stepSize;
+    Microphone(BeatnikOptions options) {
+        this.sampleRate = options.getSampleRate();
+        this.stepSize = options.getStepSize();
 
         buffer = ByteBuffer.allocateDirect(getBufferSizeInBytes());
         buffer.order(ByteOrder.LITTLE_ENDIAN);

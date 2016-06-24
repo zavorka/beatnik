@@ -21,14 +21,14 @@ class BeatAnalyzer implements AudioProcessor.OnProcessorOutputListener
 
     private List<OnBPMCalculatedListener> listeners = new ArrayList<>();
 
-    BeatAnalyzer(int sampleRate, int stepSize, int blockSize) {
-        this(DEFAULT_BUFFER_SIZE, sampleRate, stepSize, blockSize);
+    BeatAnalyzer(BeatnikOptions options) {
+        this(options, DEFAULT_BUFFER_SIZE);
     }
 
-    BeatAnalyzer(int bufferSize, int sampleRate, int stepSize, int blockSize) {
+    BeatAnalyzer(BeatnikOptions options, int bufferSize) {
         dfOutput = ByteBuffer.allocateDirect(bufferSize * Double.SIZE).asDoubleBuffer();
         dfOutput.clear();
-        init(sampleRate, stepSize, blockSize);
+        init(options.getSampleRate(), options.getStepSize(), options.getWindowSize());
     }
 
     void start() {

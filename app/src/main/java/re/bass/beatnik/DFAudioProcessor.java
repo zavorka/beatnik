@@ -24,10 +24,10 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
 
     private final List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
 
-    DFAudioProcessor(int sampleRate, int stepSize, int windowSize) {
-        this.sampleRate = sampleRate;
-        this.stepSize = stepSize;
-        this.windowSize = windowSize;
+    DFAudioProcessor(BeatnikOptions options) {
+        sampleRate = options.getSampleRate();
+        stepSize = options.getStepSize();
+        windowSize = options.getWindowSize();
     }
 
     private native void init(int sampleRate, int stepSize, int windowSize);
