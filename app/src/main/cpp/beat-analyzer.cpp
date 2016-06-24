@@ -1,0 +1,43 @@
+#include <jni.h>
+#include <android/log.h>
+
+#include "tracker/Beat_analyzer.hpp"
+
+#define TAG "BeatAnalyzer"
+
+static reBass::Beat_analyzer* analyzer;
+
+extern "C"
+void
+Java_re_bass_beatnik_BeatAnalyzer_init(
+        JNIEnv* env,
+        jobject object, /* this */
+        jint sampleRate,
+        jint stepSize,
+        jint windowSize
+) {
+    analyzer = new reBass::Beat_analyzer(
+            (unsigned int) sampleRate,
+            (size_t) stepSize,
+            (size_t) windowSize
+    );
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_BeatAnalyzer_enqueueDFValue(
+        JNIEnv* env,
+        jobject object, /* this */
+        jdouble dfValue
+) {
+    analyzer->enqueue_df_value(dfValue);
+}
+
+extern "C"
+float
+Java_re_bass_beatnik_BeatAnalyzer_getBPM(
+        JNIEnv* env,
+        jobject object /* this */
+) {
+    return analyzer->get_bpm();
+}
