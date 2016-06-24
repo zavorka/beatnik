@@ -9,10 +9,11 @@
 
 namespace reBass
 {
-    Tracker::Tracker(float rate, size_t increment) :
-            mRate(rate), mIncrement(increment) { }
-    Tracker::~Tracker() { }
-
+    Tracker::Tracker(size_t increment, unsigned int sample_rate)
+            : mIncrement(increment),
+              sample_rate(sample_rate)
+    {
+    }
 
     void Tracker::calculateBeatPeriod(const vector<double> &df, vector<double> &beatPeriod)
     {
