@@ -9,9 +9,9 @@ import java.nio.FloatBuffer;
  * Created by curly on 24/06/2016.
  */
 
-class NativeAudioListener implements AudioInput.AudioListener
+class DFAudioProcessor implements AudioInput.AudioListener
 {
-    private final String TAG = "NativeAudioListener";
+    private final String TAG = "DFAudioProcessor";
 
     private final int stepSize;
     private final int windowSize;
@@ -20,7 +20,7 @@ class NativeAudioListener implements AudioInput.AudioListener
 
     private int calls_count = 0;
 
-    NativeAudioListener(int sampleRate, int stepSize, int windowSize) {
+    DFAudioProcessor(int sampleRate, int stepSize, int windowSize) {
         this.sampleRate = sampleRate;
         this.stepSize = stepSize;
         this.windowSize = windowSize;
