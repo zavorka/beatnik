@@ -29,7 +29,7 @@ reBass::RealTime get_current_time() {
 
 extern "C"
 void
-Java_re_bass_beatnik_NativeAudioListener_init(
+Java_re_bass_beatnik_DFAudioProcessor_init(
         JNIEnv* env,
         jobject object, /* this */
         jint sampleRate,
@@ -40,7 +40,7 @@ Java_re_bass_beatnik_NativeAudioListener_init(
 
 extern "C"
 double
-Java_re_bass_beatnik_NativeAudioListener_processAudio(
+Java_re_bass_beatnik_DFAudioProcessor_processAudio(
     JNIEnv* env,
     jobject object, /* this */
     jobject input,

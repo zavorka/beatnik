@@ -16,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         Microphone microphone = new Microphone(SAMPLE_RATE, STEP_SIZE);
-        microphone.addListener(new NativeAudioListener(SAMPLE_RATE, STEP_SIZE, WINDOW_SIZE));
+        microphone.addListener(new DFAudioProcessor(SAMPLE_RATE, STEP_SIZE, WINDOW_SIZE));
 
         microphone.start();
     }
