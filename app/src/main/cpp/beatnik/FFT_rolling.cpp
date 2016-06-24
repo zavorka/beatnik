@@ -15,20 +15,18 @@ using std::complex;
 namespace reBass
 {
     FFT_rolling::FFT_rolling(
-            size_t window_size,
-            FFT_callback callback
-    ) : FFT_rolling(window_size, window_size * 8, callback) {
+            size_t window_size
+    ) : FFT_rolling(window_size, window_size * 8) {
     }
 
     FFT_rolling::FFT_rolling(
             size_t window_size,
-            size_t history_buffer_size,
-            FFT_callback callback
+            size_t history_buffer_size
     )
             : window_size { window_size },
               window { Window_type::hanning, window_size },
               windowed_buffer(window_size),
-              callback { callback },
+              callback { nullptr },
               fft_config {
                       kiss_fftr_alloc(window_size, 0, 0, 0),
                       kiss_fftr_free
@@ -67,9 +65,42 @@ namespace reBass
                 reinterpret_cast<kiss_fft_cpx*>(&fft_buffer[0])
         );
 
-        callback(fft_buffer);
+        if (callback != nullptr) {
+            (*callback)(fft_buffer);
+        }
         return fft_buffer;
     }
+
+    const vector<complex<float>>&
+    FFT_rolling::compute_fft(const float * const buffer, size_t length)
+    {
+        history_buffer.insert(
+                history_buffer.end(),
+                buffer,
+                buffer + length
+        );
+        if (history_buffer.size() < window_size) {
+            history_buffer.insert(
+                    history_buffer.begin(),
+                    window_size - history_buffer.size(),
+                    0.0f
+            );
+        }
+        window.cut(history_buffer.end() - window_size, windowed_buffer.begin());
+
+        // Yes, kiss_fft_cpx is the same data structure as complex<float>
+        kiss_fftr(
+                fft_config.get(),
+                &windowed_buffer[0],
+                reinterpret_cast<kiss_fft_cpx*>(&fft_buffer[0])
+        );
+
+        if (callback != nullptr) {
+            (*callback)(fft_buffer);
+        }
+        return fft_buffer;
+    }
+
 
 
     size_t FFT_rolling::get_frequency_data_buffer_size() const {
