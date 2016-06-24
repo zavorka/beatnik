@@ -22,7 +22,7 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
 
     private int calls_count = 0;
 
-    private List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
+    private final List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
 
     DFAudioProcessor(int sampleRate, int stepSize, int windowSize) {
         this.sampleRate = sampleRate;

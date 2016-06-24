@@ -5,7 +5,7 @@ LOCAL_MODULE := beatnik
 
 LOCAL_C_INCLUDES += $(NDK_ROOT)/sources/boost/1.59.0/include
 
-LOCAL_SRC_FILES := native-lib.cpp
+LOCAL_SRC_FILES := df-processor.cpp
 LOCAL_SRC_FILES += external/kiss_fft/kiss_fft.c
 LOCAL_SRC_FILES += external/kiss_fft/kiss_fftr.c
 LOCAL_SRC_FILES += external/RealTime/RealTime.cpp
