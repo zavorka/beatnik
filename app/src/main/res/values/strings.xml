@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">beatnik</string>
-    <string name="bpm_value">%1$f BPM</string>
     <string name="bpm_value">%1$.1f BPM</string>
+    <string name="nopeville">You Since access to the mic is quite essential for the app\'s core functionality, it won\'t do anything until you make your mind up. If you\'re unhappy with this behavior, ask on Play Store for refund.</string>
 </resources>

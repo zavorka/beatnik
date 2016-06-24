@@ -5,7 +5,7 @@
 
 #define TAG "BeatAnalyzer"
 
-static reBass::Beat_analyzer* analyzer;
+static reBass::Beat_analyzer* analyzer = nullptr;
 
 extern "C"
 void
@@ -30,6 +30,9 @@ Java_re_bass_beatnik_BeatAnalyzer_enqueueDFValue(
         jobject object, /* this */
         jdouble dfValue
 ) {
+    if (analyzer == nullptr) {
+        return;
+    }
     analyzer->enqueue_df_value(dfValue);
 }
 
@@ -39,5 +42,20 @@ Java_re_bass_beatnik_BeatAnalyzer_getBPM(
         JNIEnv* env,
         jobject object /* this */
 ) {
+    if (analyzer == nullptr) {
+        return -1.f;
+    }
     return analyzer->get_bpm();
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_BeatAnalyzer_clearData(
+        JNIEnv* env,
+        jobject object /* this */
+) {
+    if (analyzer == nullptr) {
+        return;
+    }
+    analyzer->clear_data();
 }

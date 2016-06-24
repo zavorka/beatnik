@@ -20,8 +20,6 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
     private final int sampleRate;
     private boolean initialized = false;
 
-    private int calls_count = 0;
-
     private final List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
 
     DFAudioProcessor(BeatnikOptions options) {
@@ -31,7 +29,7 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
     }
 
     private native void init(int sampleRate, int stepSize, int windowSize);
-    private native double processAudio(FloatBuffer buffer, int offset, int size);
+    private native double processAudio(ByteBuffer buffer, int offset, int size);
 
     @Override
     public void onStart() {
@@ -44,13 +42,10 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
         if (!initialized) {
             throw new RuntimeException("Not initialized yet.");
         }
-        FloatBuffer floatBuffer = buffer.asFloatBuffer().asReadOnlyBuffer();
-        for (int i = 0; i < floatBuffer.capacity(); i += stepSize) {
-            double dfOutput = processAudio(floatBuffer, i, stepSize);
+        final int capacityInFloats = buffer.capacity() / (Float.SIZE / Byte.SIZE);
+        for (int i = 0; i < capacityInFloats; i += stepSize) {
+            double dfOutput = processAudio(buffer, i, stepSize);
             notifyOutputListeners(dfOutput);
-            if (calls_count++ % 100 == 0) {
-                Log.i(TAG, "onAudio: " + dfOutput);
-            }
         }
     }
 

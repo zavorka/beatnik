@@ -100,7 +100,14 @@ namespace reBass
             bpm *= 2.0;
         }
 
+        while (bpm < 120.0) {
+            bpm *= 1.5;
+        }
+
         return bpm;
     }
 
+    void Beat_analyzer::clear_data() {
+        df.clear();
+    }
 }

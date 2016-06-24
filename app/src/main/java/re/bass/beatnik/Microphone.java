@@ -24,7 +24,6 @@ class Microphone extends Thread implements AudioInput
     private final static short ENCODING = AudioFormat.ENCODING_PCM_FLOAT;
     private final static int CHANNEL_MASK = AudioFormat.CHANNEL_IN_MONO;
 
-    private AudioRecord record;
     private ByteBuffer buffer;
     private int bufferSize = 0;
 
@@ -38,8 +37,12 @@ class Microphone extends Thread implements AudioInput
 
         buffer = ByteBuffer.allocateDirect(getBufferSizeInBytes());
         buffer.order(ByteOrder.LITTLE_ENDIAN);
+    }
 
-        record = new AudioRecord.Builder()
+    @Override
+    public void run() {
+        Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
+        AudioRecord record = new AudioRecord.Builder()
                 .setAudioSource(AUDIO_SOURCE)
                 .setAudioFormat(new AudioFormat.Builder()
                         .setEncoding(ENCODING)
@@ -49,11 +52,7 @@ class Microphone extends Thread implements AudioInput
                 )
                 .setBufferSizeInBytes(getBufferSizeInBytes())
                 .build();
-    }
 
-    @Override
-    public void run() {
-        Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
         synchronized (this) {
             started = true;
             for (AudioListener listener : listeners) {
