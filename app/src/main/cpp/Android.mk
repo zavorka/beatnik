@@ -3,7 +3,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 LOCAL_MODULE := beatnik
 
-LOCAL_C_INCLUDES += $(NDK_ROOT)/sources/boost/1.59.0/include
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../external/boost/include
 
 LOCAL_SRC_FILES += df-processor.cpp
 LOCAL_SRC_FILES += beat-analyzer.cpp
