@@ -11,119 +11,117 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.widget.TextView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
-public class MainActivity
-        extends AppCompatActivity
-        implements BeatAnalyzer.OnBPMCalculatedListener
-{
-    private final static String TAG = "MainActivity";
 
-    static {
-        System.loadLibrary("beatnik");
-    }
+public class MainActivity extends AppCompatActivity implements BeatAnalyzer.OnBPMCalculatedListener {
+	private final static String TAG = "MainActivity";
 
-    private Microphone microphone;
-    private BeatAnalyzer analyzer;
-    private TextView textView;
+	@BindView(R.id.bmpText) TextView bpmText;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+	static {
+		System.loadLibrary("beatnik");
+	}
 
-        textView = (TextView)findViewById(R.id.text_view);
+	private Microphone microphone;
+	private BeatAnalyzer analyzer;
 
-        initialize();
-        getRecordingPermissionAndStart();
-    }
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+		ButterKnife.bind(this);
 
-    @Override
-    protected void onStop() {
-        super.onStop();
+		initialize();
+		getRecordingPermissionAndStart();
+	}
 
-        if (analyzer != null) {
-            analyzer.onStop();
-        }
-    }
+	@Override
+	protected void onStop() {
+		super.onStop();
 
-    private void initialize() {
-        final BeatnikOptions options = new BeatnikOptions();
-        microphone = new Microphone(options);
-        DFAudioProcessor processor = new DFAudioProcessor(options);
-        analyzer = new BeatAnalyzer(options);
+		if (analyzer != null) {
+			analyzer.onStop();
+		}
+	}
 
-        microphone.addListener(processor);
-        processor.addOnProcessorOutputListener(analyzer);
-        analyzer.addOnBPMCalculatedListener(this);
-    }
+	private void initialize() {
+		final BeatnikOptions options = new BeatnikOptions();
+		microphone = new Microphone(options);
+		DFAudioProcessor processor = new DFAudioProcessor(options);
+		analyzer = new BeatAnalyzer(options);
 
-    private void startRecording() {
-        microphone.start();
-        analyzer.start();
-    }
+		microphone.addListener(processor);
+		processor.addOnProcessorOutputListener(analyzer);
+		analyzer.addOnBPMCalculatedListener(this);
+	}
 
-    private void doNothing() {
-        assert textView != null;
-        textView.setText(R.string.nopeville);
-        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-    }
+	private void startRecording() {
+		microphone.start();
+		analyzer.start();
+	}
 
-    @Override
-    public void onBPMCalculated(final float bpm) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                assert textView != null;
-                textView.setText(getString(R.string.bpm_value, bpm));
-            }
-        });
-    }
+	private void doNothing() {
+		bpmText.setText(R.string.nopeville);
+		bpmText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+	}
 
-    private void getRecordingPermissionAndStart( /* or die trying */
-    ) {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-        ) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.RECORD_AUDIO
-            )) {
-                requestAudioRecordingPermission();
-            } else {
-                requestAudioRecordingPermission();
-            }
-        } else {
-            onPermissionGranted();
-        }
-    }
+	@Override
+	public void onBPMCalculated(final float bpm) {
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				bpmText.setText(getString(R.string.bpm_value, bpm));
+			}
+		});
+	}
 
-    @Override
-    public void onRequestPermissionsResult(
-            int requestCode,
-            @NonNull String permissions[],
-            @NonNull int[] grantResults
-    ) {
-        if (grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            onPermissionGranted();
-        } else {
-            onPermissionDenied();
-        }
-    }
+	private void getRecordingPermissionAndStart( /* or die trying */
+	) {
+		if (ContextCompat.checkSelfPermission(
+				this,
+				Manifest.permission.RECORD_AUDIO
+		) != PackageManager.PERMISSION_GRANTED) {
+			if (ActivityCompat.shouldShowRequestPermissionRationale(
+					this,
+					Manifest.permission.RECORD_AUDIO
+			)) {
+				requestAudioRecordingPermission();
+			} else {
+				requestAudioRecordingPermission();
+			}
+		} else {
+			onPermissionGranted();
+		}
+	}
 
-    private void onPermissionGranted() {
-        startRecording();
-    }
+	@Override
+	public void onRequestPermissionsResult(
+			int requestCode,
+			@NonNull String permissions[],
+			@NonNull int[] grantResults
+	) {
+		if (grantResults.length > 0
+				&& grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+			onPermissionGranted();
+		} else {
+			onPermissionDenied();
+		}
+	}
 
-    private void onPermissionDenied() {
-        doNothing();
-    }
+	private void onPermissionGranted() {
+		startRecording();
+	}
 
-    private void requestAudioRecordingPermission() {
-        ActivityCompat.requestPermissions(
-                this,
-                new String[] { Manifest.permission.RECORD_AUDIO},
-                0);
-    }
+	private void onPermissionDenied() {
+		doNothing();
+	}
+
+	private void requestAudioRecordingPermission() {
+		ActivityCompat.requestPermissions(
+				this,
+				new String[]{Manifest.permission.RECORD_AUDIO},
+				0);
+	}
 }
