@@ -4,12 +4,14 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by curly on 24/06/2016.
  */
 
-class DFAudioProcessor implements AudioInput.AudioListener
+class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
 {
     private final String TAG = "DFAudioProcessor";
 
@@ -19,6 +21,8 @@ class DFAudioProcessor implements AudioInput.AudioListener
     private boolean initialized = false;
 
     private int calls_count = 0;
+
+    private List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
 
     DFAudioProcessor(int sampleRate, int stepSize, int windowSize) {
         this.sampleRate = sampleRate;
@@ -43,9 +47,32 @@ class DFAudioProcessor implements AudioInput.AudioListener
         FloatBuffer floatBuffer = buffer.asFloatBuffer().asReadOnlyBuffer();
         for (int i = 0; i < floatBuffer.capacity(); i += stepSize) {
             double dfOutput = processAudio(floatBuffer, i, stepSize);
+            notifyOutputListeners(dfOutput);
             if (calls_count++ % 100 == 0) {
                 Log.i(TAG, "onAudio: " + dfOutput);
             }
+        }
+    }
+
+    private void notifyOutputListeners(double dfOutput) {
+        synchronized (this) {
+            for (OnProcessorOutputListener listener : outputListeners) {
+                listener.onProcessorOutput(dfOutput);
+            }
+        }
+    }
+
+    @Override
+    public void addOnProcessorOutputListener(OnProcessorOutputListener listener) {
+        synchronized (this) {
+            outputListeners.add(listener);
+        }
+    }
+
+    @Override
+    public void removeOnProcessorOutputListener(OnProcessorOutputListener listener) {
+        synchronized (this) {
+            outputListeners.remove(listener);
         }
     }
 }

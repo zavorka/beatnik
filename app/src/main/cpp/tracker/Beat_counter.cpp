@@ -86,7 +86,10 @@ namespace reBass
         {
             size_t frame = (size_t) (beats[i] * getStepSize());
             Beat beat;
-            beat.timestamp = mOrigin + RealTime::frame2RealTime((int)frame, (unsigned int)lrintf(mInputSampleRate));
+            beat.timestamp = mOrigin + RealTime::frame2RealTime(
+                    (int)frame,
+                    (unsigned int)lrintf(mInputSampleRate)
+            );
 
             int frameIncrement = 0;
 
