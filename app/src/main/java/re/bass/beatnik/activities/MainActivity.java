@@ -12,9 +12,11 @@ import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import re.bass.beatnik.audio.AudioProcessor;
 import re.bass.beatnik.audio.BeatAnalyzer;
 import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.audio.DFAudioProcessor;
+import re.bass.beatnik.audio.AudioInput;
 import re.bass.beatnik.audio.Microphone;
 import re.bass.beatnik.R;
 
@@ -28,7 +30,7 @@ public class MainActivity
         System.loadLibrary("beatnik");
     }
 
-    private Microphone microphone;
+    private AudioInput input;
     private BeatAnalyzer analyzer;
 	@BindView(R.id.bmp_text) TextView bpmText;
 
@@ -53,17 +55,17 @@ public class MainActivity
 
     private void initialize() {
         final BeatnikOptions options = new BeatnikOptions();
-        microphone = new Microphone(options);
-        DFAudioProcessor processor = new DFAudioProcessor(options);
+        input = new Microphone(options);
+        AudioProcessor processor = new DFAudioProcessor(options);
         analyzer = new BeatAnalyzer(options);
 
-        microphone.addListener(processor);
+        input.addListener(processor);
         processor.addOnProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
     }
 
     private void startRecording() {
-        microphone.start();
+        input.startFetchingAudio();
         analyzer.start();
     }
 

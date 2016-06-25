@@ -10,7 +10,7 @@ import re.bass.beatnik.BeatnikOptions;
  * Created by curly on 24/06/2016.
  */
 
-public class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
+public class DFAudioProcessor implements AudioProcessor
 {
     private final String TAG = "DFAudioProcessor";
 

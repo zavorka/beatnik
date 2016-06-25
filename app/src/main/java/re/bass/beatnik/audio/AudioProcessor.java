@@ -4,7 +4,7 @@ package re.bass.beatnik.audio;
  * Created by curly on 24/06/2016.
  */
 
-interface AudioProcessor {
+public interface AudioProcessor extends AudioInput.AudioListener {
     void addOnProcessorOutputListener(OnProcessorOutputListener listener);
     void removeOnProcessorOutputListener(OnProcessorOutputListener listener);
 

@@ -109,6 +109,11 @@ public class Microphone extends Thread implements AudioInput
         return 4; // Size of float datatype
     }
 
+    @Override
+    public void startFetchingAudio() {
+        start();
+    }
+
     private int getPreferredBufferSize() {
         final int minSize = AudioTrack.getMinBufferSize(
                 sampleRate,
