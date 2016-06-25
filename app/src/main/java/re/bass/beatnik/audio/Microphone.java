@@ -1,4 +1,4 @@
-package re.bass.beatnik;
+package re.bass.beatnik.audio;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -11,11 +11,13 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import re.bass.beatnik.BeatnikOptions;
+
 /**
  * Created by curly on 22/06/2016.
  */
 
-class Microphone extends Thread implements AudioInput
+public class Microphone extends Thread implements AudioInput
 {
     private int sampleRate;
     private int stepSize;
@@ -31,7 +33,7 @@ class Microphone extends Thread implements AudioInput
 
     private List<AudioListener> listeners = new ArrayList<>();
 
-    Microphone(BeatnikOptions options) {
+    public Microphone(BeatnikOptions options) {
         this.sampleRate = options.getSampleRate();
         this.stepSize = options.getStepSize();
 

@@ -1,4 +1,4 @@
-package re.bass.beatnik;
+package re.bass.beatnik.audio;
 
 import java.nio.ByteBuffer;
 

@@ -1,4 +1,4 @@
-package re.bass.beatnik;
+package re.bass.beatnik.audio;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
@@ -8,11 +8,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
+import re.bass.beatnik.BeatnikOptions;
+import re.bass.beatnik.OnStopListener;
+
 /**
  * Created by curly on 24/06/2016.
  */
 
-class BeatAnalyzer
+public class BeatAnalyzer
         implements AudioProcessor.OnProcessorOutputListener,
         OnStopListener
 {
@@ -25,11 +28,11 @@ class BeatAnalyzer
 
     private List<OnBPMCalculatedListener> listeners = new ArrayList<>();
 
-    BeatAnalyzer(BeatnikOptions options) {
+    public BeatAnalyzer(BeatnikOptions options) {
         this(options, DEFAULT_BUFFER_SIZE);
     }
 
-    BeatAnalyzer(BeatnikOptions options, int bufferSize) {
+    public BeatAnalyzer(BeatnikOptions options, int bufferSize) {
         tempBuffer = ByteBuffer.allocateDirect(bufferSize * Double.SIZE).asDoubleBuffer();
         tempBuffer.clear();
         init(options.getSampleRate(), options.getStepSize(), options.getWindowSize());
@@ -67,7 +70,7 @@ class BeatAnalyzer
         }
     }
 
-    void start() {
+    public void start() {
         Timer calculateBPMTimer = new Timer(true);
         calculateBPMTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -111,11 +114,11 @@ class BeatAnalyzer
         clearData();
     }
 
-    interface OnBPMCalculatedListener {
+    public interface OnBPMCalculatedListener {
         void onBPMCalculated(float bpm);
     }
 
-    void addOnBPMCalculatedListener(OnBPMCalculatedListener listener) {
+    public void addOnBPMCalculatedListener(OnBPMCalculatedListener listener) {
         synchronized (this) {
             listeners.add(listener);
         }

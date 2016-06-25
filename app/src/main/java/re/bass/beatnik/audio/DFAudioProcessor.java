@@ -1,17 +1,16 @@
-package re.bass.beatnik;
-
-import android.util.Log;
+package re.bass.beatnik.audio;
 
 import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
+
+import re.bass.beatnik.BeatnikOptions;
 
 /**
  * Created by curly on 24/06/2016.
  */
 
-class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
+public class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
 {
     private final String TAG = "DFAudioProcessor";
 
@@ -22,7 +21,7 @@ class DFAudioProcessor implements AudioInput.AudioListener, AudioProcessor
 
     private final List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
 
-    DFAudioProcessor(BeatnikOptions options) {
+    public DFAudioProcessor(BeatnikOptions options) {
         sampleRate = options.getSampleRate();
         stepSize = options.getStepSize();
         windowSize = options.getWindowSize();

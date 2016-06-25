@@ -1,4 +1,4 @@
-package re.bass.beatnik;
+package re.bass.beatnik.audio;
 
 /**
  * Created by curly on 24/06/2016.

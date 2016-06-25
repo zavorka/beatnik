@@ -1,4 +1,4 @@
-package re.bass.beatnik;
+package re.bass.beatnik.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -7,12 +7,16 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.util.TypedValue;
 import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import re.bass.beatnik.audio.BeatAnalyzer;
+import re.bass.beatnik.BeatnikOptions;
+import re.bass.beatnik.audio.DFAudioProcessor;
+import re.bass.beatnik.audio.Microphone;
+import re.bass.beatnik.R;
 
 public class MainActivity
         extends AppCompatActivity

@@ -23,7 +23,7 @@ static size_t called = 0;
 
 extern "C"
 void
-Java_re_bass_beatnik_DFAudioProcessor_init(
+Java_re_bass_beatnik_audio_DFAudioProcessor_init(
         JNIEnv* env,
         jobject object, /* this */
         jint sampleRate,
@@ -39,7 +39,7 @@ Java_re_bass_beatnik_DFAudioProcessor_init(
 
 extern "C"
 double
-Java_re_bass_beatnik_DFAudioProcessor_processAudio(
+Java_re_bass_beatnik_audio_DFAudioProcessor_processAudio(
     JNIEnv* env,
     jobject object, /* this */
     jobject input,

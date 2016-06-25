@@ -9,7 +9,7 @@ static reBass::Beat_analyzer* analyzer = nullptr;
 
 extern "C"
 void
-Java_re_bass_beatnik_BeatAnalyzer_init(
+Java_re_bass_beatnik_audio_BeatAnalyzer_init(
         JNIEnv* env,
         jobject object, /* this */
         jint sampleRate,
@@ -25,7 +25,7 @@ Java_re_bass_beatnik_BeatAnalyzer_init(
 
 extern "C"
 void
-Java_re_bass_beatnik_BeatAnalyzer_enqueueDFValue(
+Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValue(
         JNIEnv* env,
         jobject object, /* this */
         jdouble dfValue
@@ -38,7 +38,7 @@ Java_re_bass_beatnik_BeatAnalyzer_enqueueDFValue(
 
 extern "C"
 float
-Java_re_bass_beatnik_BeatAnalyzer_getBPM(
+Java_re_bass_beatnik_audio_BeatAnalyzer_getBPM(
         JNIEnv* env,
         jobject object /* this */
 ) {
@@ -50,7 +50,7 @@ Java_re_bass_beatnik_BeatAnalyzer_getBPM(
 
 extern "C"
 void
-Java_re_bass_beatnik_BeatAnalyzer_clearData(
+Java_re_bass_beatnik_audio_BeatAnalyzer_clearData(
         JNIEnv* env,
         jobject object /* this */
 ) {
