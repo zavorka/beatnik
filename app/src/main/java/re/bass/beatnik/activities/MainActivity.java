@@ -2,23 +2,25 @@ package re.bass.beatnik.activities;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.TypedValue;
+import android.view.View;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
+import re.bass.beatnik.BeatnikOptions;
+import re.bass.beatnik.R;
+import re.bass.beatnik.audio.AudioInput;
 import re.bass.beatnik.audio.AudioProcessor;
 import re.bass.beatnik.audio.BeatAnalyzer;
-import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.audio.DFAudioProcessor;
-import re.bass.beatnik.audio.AudioInput;
 import re.bass.beatnik.audio.Microphone;
-import re.bass.beatnik.R;
 
 public class MainActivity
         extends AppCompatActivity
@@ -32,7 +34,11 @@ public class MainActivity
 
     private AudioInput input;
     private BeatAnalyzer analyzer;
-	@BindView(R.id.bmp_text) TextView bpmText;
+
+    @BindView(R.id.content_layout) RelativeLayout content;
+    @BindView(R.id.bpm_number_text) TextView bpmNumberText;
+	@BindView(R.id.bpm_unit_text) TextView bpmUnitText;
+    @BindView(R.id.fuck_off_text) TextView fuckOffText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +60,8 @@ public class MainActivity
     }
 
     private void initialize() {
+        bpmNumberText.setText(R.string.app_name);
+
         final BeatnikOptions options = new BeatnikOptions();
         input = new Microphone(options);
         AudioProcessor processor = new DFAudioProcessor(options);
@@ -70,9 +78,13 @@ public class MainActivity
     }
 
     private void doNothing() {
-        assert bpmText != null;
-        bpmText.setText(R.string.nopeville);
-        bpmText.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        content.setVisibility(View.GONE);
+        fuckOffText.setVisibility(View.VISIBLE);
+    }
+
+    @OnClick(R.id.fuck_off_text)
+    public void onUserChangedMind() {
+        getRecordingPermissionAndStart();
     }
 
     @Override
@@ -80,8 +92,8 @@ public class MainActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                assert bpmText != null;
-                bpmText.setText(getString(R.string.bpm_value, bpm));
+                bpmUnitText.setVisibility(View.VISIBLE);
+                bpmNumberText.setText(getString(R.string.bpm_value, bpm));
             }
         });
     }
@@ -120,6 +132,8 @@ public class MainActivity
     }
 
     private void onPermissionGranted() {
+        fuckOffText.setVisibility(View.GONE);
+        content.setVisibility(View.VISIBLE);
         startRecording();
     }
 
