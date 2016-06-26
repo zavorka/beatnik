@@ -19,7 +19,8 @@ public class DFAudioProcessor implements AudioProcessor
     private final int sampleRate;
     private boolean initialized = false;
 
-    private final List<OnProcessorOutputListener> outputListeners = new ArrayList<>();
+    private final List<OnProcessorOutputListener> outputListeners =
+            new ArrayList<>();
 
     public DFAudioProcessor(BeatnikOptions options) {
         sampleRate = options.getSampleRate();
@@ -27,8 +28,16 @@ public class DFAudioProcessor implements AudioProcessor
         windowSize = options.getWindowSize();
     }
 
-    private native void init(int sampleRate, int stepSize, int windowSize);
-    private native double processAudio(ByteBuffer buffer, int offset, int size);
+    private native void init(
+            int sampleRate,
+            int stepSize,
+            int windowSize
+    );
+    private native double processAudio(
+            ByteBuffer buffer,
+            int offset,
+            int size
+    );
 
     @Override
     public void onStart() {
@@ -41,7 +50,9 @@ public class DFAudioProcessor implements AudioProcessor
         if (!initialized) {
             throw new RuntimeException("Not initialized yet.");
         }
-        final int capacityInFloats = buffer.capacity() / (Float.SIZE / Byte.SIZE);
+        final int capacityInFloats =
+                buffer.capacity() / (Float.SIZE / Byte.SIZE);
+
         for (int i = 0; i < capacityInFloats; i += stepSize) {
             double dfOutput = processAudio(buffer, i, stepSize);
             notifyOutputListeners(dfOutput);
@@ -57,14 +68,18 @@ public class DFAudioProcessor implements AudioProcessor
     }
 
     @Override
-    public void addOnProcessorOutputListener(OnProcessorOutputListener listener) {
+    public void addOnProcessorOutputListener(
+            OnProcessorOutputListener listener
+    ) {
         synchronized (this) {
             outputListeners.add(listener);
         }
     }
 
     @Override
-    public void removeOnProcessorOutputListener(OnProcessorOutputListener listener) {
+    public void removeOnProcessorOutputListener(
+            OnProcessorOutputListener listener
+    ) {
         synchronized (this) {
             outputListeners.remove(listener);
         }

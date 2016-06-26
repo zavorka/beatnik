@@ -33,9 +33,14 @@ public class BeatAnalyzer
     }
 
     public BeatAnalyzer(BeatnikOptions options, int bufferSize) {
-        tempBuffer = ByteBuffer.allocateDirect(bufferSize * Double.SIZE).asDoubleBuffer();
+        tempBuffer = ByteBuffer.allocateDirect(bufferSize * Double.SIZE)
+                .asDoubleBuffer();
         tempBuffer.clear();
-        init(options.getSampleRate(), options.getStepSize(), options.getWindowSize());
+        init(
+                options.getSampleRate(),
+                options.getStepSize(),
+                options.getWindowSize()
+        );
     }
 
     private synchronized boolean isOngoingAnalysis() {
