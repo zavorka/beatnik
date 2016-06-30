@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -43,6 +44,8 @@ public class MainActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.v(TAG, "onCreate()");
+
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
@@ -53,6 +56,7 @@ public class MainActivity
     @Override
     protected void onStop() {
         super.onStop();
+        Log.v(TAG, "onStop()");
 
         if (analyzer != null) {
             analyzer.onStop();
@@ -60,6 +64,7 @@ public class MainActivity
     }
 
     private void initialize() {
+        Log.v(TAG, "initialize()");
         bpmNumberText.setText(R.string.app_name);
 
         final BeatnikOptions options = new BeatnikOptions();
@@ -73,6 +78,7 @@ public class MainActivity
     }
 
     private void startRecording() {
+        Log.v(TAG, "startRecording()");
         input.startFetchingAudio();
         analyzer.start();
     }
@@ -92,6 +98,7 @@ public class MainActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                Log.v(TAG, "BPM calculated: " + String.valueOf(bpm));
                 bpmUnitText.setVisibility(View.VISIBLE);
                 bpmNumberText.setText(getString(R.string.bpm_value, bpm));
             }
@@ -108,11 +115,14 @@ public class MainActivity
                     this,
                     Manifest.permission.RECORD_AUDIO
             )) {
+                Log.v(TAG, "SHOULD show request permission rationale");
                 requestAudioRecordingPermission();
             } else {
+                Log.v(TAG, "should NOT show request permission rationale");
                 requestAudioRecordingPermission();
             }
         } else {
+            Log.v(TAG, "no need to request recording permission");
             onPermissionGranted();
         }
     }
@@ -132,16 +142,19 @@ public class MainActivity
     }
 
     private void onPermissionGranted() {
+        Log.d(TAG, "Mic permission granted");
         fuckOffText.setVisibility(View.GONE);
         content.setVisibility(View.VISIBLE);
         startRecording();
     }
 
     private void onPermissionDenied() {
+        Log.d(TAG, "Mic permission denied.");
         doNothing();
     }
 
     private void requestAudioRecordingPermission() {
+        Log.d(TAG, "Requesting mic permission.");
         ActivityCompat.requestPermissions(
                 this,
                 new String[] { Manifest.permission.RECORD_AUDIO},
