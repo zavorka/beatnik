@@ -106,7 +106,7 @@ public class Microphone extends Thread implements AudioInput
 
     @Override
     public int getFrameSize() {
-        return 4; // Size of float datatype
+        return Float.SIZE / Byte.SIZE;
     }
 
     @Override
@@ -118,8 +118,8 @@ public class Microphone extends Thread implements AudioInput
         final int minSize = AudioTrack.getMinBufferSize(
                 sampleRate,
                 AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_8BIT // get number of frames instead of bytes
-        );
+                ENCODING // get number of frames instead of bytes
+        ) / getFrameSize();
         int steps = 1;
         while (stepSize * steps < minSize) {
             steps *= 2;
