@@ -59,7 +59,11 @@ public class BeatAnalyzer
 
 
     @Override
-    public void onProcessorOutput(double output, float[] frequencyDomain) {
+    public void onProcessorOutput(
+            double output,
+            float[] frequencyDomain,
+            float[] magnitudes
+    ) {
         synchronized (this) {
             if (ongoingAnalysis) {
                 tempBuffer.put(output);

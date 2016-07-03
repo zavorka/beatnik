@@ -22,7 +22,8 @@ namespace reBass
     {
     }
 
-    void Beat_analyzer::enqueue_df_value(const double df_value)
+    void
+    Beat_analyzer::enqueue_df_value(const double df_value)
     {
         if (df.size() >= 2048) {
             df.erase(df.begin());
@@ -31,7 +32,8 @@ namespace reBass
         df.push_back(df_value);
     }
 
-    vector<Beat> Beat_analyzer::get_beats()
+    vector<Beat>
+    Beat_analyzer::get_beats()
     {
         size_t nonZeroCount = df.size();
         while (nonZeroCount > 0) {
@@ -45,7 +47,10 @@ namespace reBass
             return vector<Beat>();
         }
 
-        vector<double> df_vector { df.cbegin() + 2, df.cbegin() + nonZeroCount };
+        vector<double> df_vector {
+                df.cbegin() + 2,
+                df.cbegin() + nonZeroCount
+        };
         vector<double> beatPeriod(nonZeroCount - 2);
 
         Tracker tracker(step_size, sample_rate);
@@ -82,7 +87,8 @@ namespace reBass
         return returnBeats;
     }
 
-    float Beat_analyzer::get_bpm() {
+    float
+    Beat_analyzer::get_bpm() {
         auto bpms = get_beats();
         size_t size = bpms.size();
         if (size < 1) {
@@ -107,7 +113,8 @@ namespace reBass
         return bpm;
     }
 
-    void Beat_analyzer::clear_data() {
+    void
+    Beat_analyzer::clear_data() {
         df.clear();
     }
 }

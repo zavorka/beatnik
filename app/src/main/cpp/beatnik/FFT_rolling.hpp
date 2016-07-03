@@ -34,6 +34,8 @@ namespace reBass {
         const std::vector<std::complex<float>>&
                 get_frequency_domain_data()
                 const;
+
+        const std::vector<float>& get_magnitudes() const;
     private:
         size_t get_frequency_data_buffer_size() const;
         void normalize_frequency_data();
@@ -45,6 +47,7 @@ namespace reBass {
         FFT_callback* callback;
         deleted_unique_ptr<kiss_fftr_state> fft_config;
         std::vector<std::complex<float>> fft_buffer;
+        std::vector<float> magnitudes_buffer;
         boost::circular_buffer<float> history_buffer;
     };
 }

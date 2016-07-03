@@ -49,13 +49,11 @@ Java_re_bass_beatnik_audio_DFAudioProcessor_processAudio(
     jfloatArray inputArray,
     jint offset,
     jint size,
-    jfloatArray fftBufferArray
+    jfloatArray fftBufferArray,
+    jfloatArray magnitudesArray
 ) {
     env->GetFloatArrayRegion(inputArray, offset, size, input_buffer->data());
-    //std::copy(input + offset, input + offset + size, input_buffer->begin());
-    //auto buffer = ((const float* const) env->GetDirectBufferAddress(input)) + offset;
-
-    const std::vector<complex<float>>& fft_buffer = fft->compute_fft(*input_buffer);
+    auto fft_buffer = fft->compute_fft(*input_buffer);
 
     env->SetFloatArrayRegion(
             fftBufferArray,
@@ -63,5 +61,13 @@ Java_re_bass_beatnik_audio_DFAudioProcessor_processAudio(
             fft_buffer.size() * 2,
             reinterpret_cast<const float*>(fft_buffer.data())
     );
-    return detection_function->processFrequencyDomain(fft_buffer);
+
+    auto magnitudes = fft->get_magnitudes();
+    env->SetFloatArrayRegion(
+            magnitudesArray,
+            0,
+            magnitudes.size(),
+            magnitudes.data()
+    );
+    return detection_function->process_frequency_domain(fft_buffer);
 }

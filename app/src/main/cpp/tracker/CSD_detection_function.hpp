@@ -17,7 +17,9 @@ namespace reBass
          * Process a single frequency-domain frame, provided as
          * frameLength/2+1 real and imaginary component values.
          */
-        virtual double processFrequencyDomain(const std::vector<std::complex<float>>& fft);
+        double process_frequency_domain(
+                const std::vector<std::complex<float>>& fft
+        );
 
     private:
         struct DFData
@@ -35,7 +37,7 @@ namespace reBass
         };
 
         void whiten();
-        double complexSD();
+        double complex_spectral_difference();
 
         unsigned int frameLength;
         unsigned int stepSize;

@@ -82,9 +82,10 @@ public class MainActivity
                     @Override
                     public void onProcessorOutput(
                             double output,
-                            float[] frequencyDomain
+                            float[] frequencyDomain,
+                            float[] magnitudes
                     ) {
-                        fftView.updateWithFFTData(frequencyDomain);
+                        fftView.updateWithFFTData(magnitudes);
                     }
                 }
         );
@@ -93,7 +94,8 @@ public class MainActivity
                     @Override
                     public void onProcessorOutput(
                             double output,
-                            float[] frequencyDomain
+                            float[] frequencyDomain,
+                            float[] magnitudes
                     ) {
                         dfView.appendValue((float) output / 512);
                     }

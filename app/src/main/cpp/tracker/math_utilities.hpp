@@ -18,7 +18,11 @@ namespace reBass
          * Return the mean of the subset of the given vector identified by
          * start and count.
          */
-        double mean(const std::vector<double> &data, int start, int count);
+        double mean(
+                const std::vector<double> &data,
+                std::size_t start,
+                std::size_t count
+        );
 
         /**
          * The principle argument function. Map the phase angle ang into

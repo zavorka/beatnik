@@ -32,6 +32,7 @@ namespace reBass
                       kiss_fftr_free
               },
               fft_buffer(get_frequency_data_buffer_size()),
+              magnitudes_buffer(get_frequency_data_buffer_size()),
               history_buffer(history_buffer_size)
     {
         if (window_size % 2 != 0) {
@@ -65,6 +66,15 @@ namespace reBass
                 reinterpret_cast<kiss_fft_cpx*>(&fft_buffer[0])
         );
         normalize_frequency_data();
+
+        std::transform(
+                fft_buffer.begin(),
+                fft_buffer.end(),
+                magnitudes_buffer.begin(),
+                [] (const complex<float>& value) {
+                    return std::abs(value);
+                }
+        );
 
         if (callback != nullptr) {
             (*callback)(fft_buffer);
@@ -125,5 +135,8 @@ namespace reBass
         return fft_buffer;
     }
 
-
+    const vector<float>&
+    FFT_rolling::get_magnitudes() const {
+        return magnitudes_buffer;
+    }
 }

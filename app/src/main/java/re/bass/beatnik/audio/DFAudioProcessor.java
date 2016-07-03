@@ -22,6 +22,7 @@ public class DFAudioProcessor implements AudioProcessor
     private boolean initialized = false;
 
     private final float[] fftBuffer;
+    private final float[] magnitudes;
 
     private final List<OnProcessorOutputListener> outputListeners =
             new ArrayList<>();
@@ -32,6 +33,7 @@ public class DFAudioProcessor implements AudioProcessor
         windowSize = options.getWindowSize();
 
         fftBuffer = new float[windowSize + 2];
+        magnitudes = new float[fftBuffer.length / 2];
     }
 
     private native void init(
@@ -43,7 +45,8 @@ public class DFAudioProcessor implements AudioProcessor
             float[] buffer,
             int offset,
             int size,
-            float[] fftBuffer
+            float[] fftBuffer,
+            float[] magnitudes
     );
 
     @Override
@@ -60,7 +63,13 @@ public class DFAudioProcessor implements AudioProcessor
         }
 
         for (int i = 0; i < buffer.length; i += stepSize) {
-            double dfOutput = processAudio(buffer, i, stepSize, fftBuffer);
+            double dfOutput = processAudio(
+                    buffer,
+                    i,
+                    stepSize,
+                    fftBuffer,
+                    magnitudes
+            );
             notifyOutputListeners(dfOutput);
         }
     }
@@ -68,7 +77,7 @@ public class DFAudioProcessor implements AudioProcessor
     private void notifyOutputListeners(double dfOutput) {
         synchronized (this) {
             for (OnProcessorOutputListener listener : outputListeners) {
-                listener.onProcessorOutput(dfOutput, fftBuffer);
+                listener.onProcessorOutput(dfOutput, fftBuffer, magnitudes);
             }
         }
     }

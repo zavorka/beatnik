@@ -1,10 +1,7 @@
 package re.bass.beatnik.plot;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.util.AttributeSet;
-
-import re.bass.beatnik.audio.AudioProcessor;
 
 /**
  * Created by curly on 7/3/16.
@@ -60,16 +57,12 @@ public class FFTPlotView extends PlotView
     }
 
     public void updateWithFFTData(float[] data) {
-        int size = data.length / 2;
-
         synchronized (this) {
-            if (buffer == null || buffer.length != size) {
-                buffer = new float[size];
+            if (buffer == null || buffer.length != data.length) {
+                buffer = new float[data.length];
             }
 
-            for (int i = 0; i < size; i++) {
-                buffer[i] = (float) Math.hypot(data[i], data[i + 1]);
-            }
+            System.arraycopy(data, 0, buffer, 0, data.length);
         }
         dataChanged();
     }

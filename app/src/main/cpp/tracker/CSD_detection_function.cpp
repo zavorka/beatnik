@@ -9,7 +9,10 @@ using std::polar;
 
 namespace reBass
 {
-    CSD_detection_function::CSD_detection_function(unsigned int frameLength, unsigned int stepSize)
+    CSD_detection_function::CSD_detection_function(
+            unsigned int frameLength,
+            unsigned int stepSize
+    )
         : frameLength(frameLength), stepSize(stepSize), data(frameLength)
     {
         for (size_t i = 0; i < frameLength; i++) {
@@ -19,8 +22,10 @@ namespace reBass
         }
     }
 
-    double CSD_detection_function::processFrequencyDomain (const vector<complex<float>>& fft)
-    {
+    double
+    CSD_detection_function::process_frequency_domain(
+            const vector<complex<float>> &fft
+    ){
         for (size_t i = 0; i < frameLength; i++) {
             data[i].magnitude = abs(fft[i]);
             double theta = arg(fft[i]);
@@ -35,10 +40,11 @@ namespace reBass
 
         whiten();
 
-        return complexSD();
+        return complex_spectral_difference();
     }
 
-    void CSD_detection_function::whiten()
+    void
+    CSD_detection_function::whiten()
     {
         for (unsigned int i = 0; i < frameLength; ++i) {
             double m = data[i].magnitude;
@@ -54,17 +60,18 @@ namespace reBass
     }
 
 
-    double CSD_detection_function::complexSD ()
+    double
+    CSD_detection_function::complex_spectral_difference()
     {
         double val = 0;
 
         for (unsigned int i = 0; i < frameLength; i++) {
-    	    double phase = (data[i].magnitude - 2 * data[i].phaseHistory + data[i].phaseHistoryOld);
+    	    double phase = (
+                    data[i].magnitude
+                    - 2 * data[i].phaseHistory
+                    + data[i].phaseHistoryOld
+            );
     	    double dev = math_utilities::princarg(phase);
-
-            //std::complex<double> meas = mMagHistory[i] -
-            //        (srcMagnitude[i] * exp(complex<double>(0, 1) * dev));
-            //val += abs(meas);
 
             val += abs(data[i].magHistory - polar(data[i].magnitude, dev));
 

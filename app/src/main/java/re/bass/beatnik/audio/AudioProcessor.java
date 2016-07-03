@@ -12,6 +12,10 @@ public interface AudioProcessor extends AudioInput.AudioListener {
     int getFFTSize();
 
     interface OnProcessorOutputListener {
-        void onProcessorOutput(double output, float[] frequencyDomain);
+        void onProcessorOutput(
+                double output,
+                float[] frequencyDomain,
+                float[] magnitudes
+        );
     }
 }
