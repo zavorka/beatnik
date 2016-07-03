@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <string>
+#include <vector>
 #include <android/log.h>
 #include <time.h>
 #include <sys/types.h>
@@ -19,6 +20,8 @@
 static reBass::FFT_rolling* fft;
 static reBass::CSD_detection_function* detection_function;
 
+static std::vector<float>* input_buffer;
+
 static size_t called = 0;
 
 extern "C"
@@ -30,6 +33,7 @@ Java_re_bass_beatnik_audio_DFAudioProcessor_init(
         jint stepSize,
         jint windowSize
 ) {
+    input_buffer = new vector<float>((size_t) stepSize);
     fft = new reBass::FFT_rolling((size_t) windowSize);
     detection_function = new reBass::CSD_detection_function(
             (size_t) windowSize,
@@ -42,15 +46,22 @@ double
 Java_re_bass_beatnik_audio_DFAudioProcessor_processAudio(
     JNIEnv* env,
     jobject object, /* this */
-    jobject input,
+    jfloatArray inputArray,
     jint offset,
-    jint size
+    jint size,
+    jfloatArray fftBufferArray
 ) {
-    auto buffer = ((const float* const) env->GetDirectBufferAddress(input)) + offset;
-    return detection_function->processFrequencyDomain(
-            fft->compute_fft(
-                    buffer,
-                    (size_t) size
-            )
+    env->GetFloatArrayRegion(inputArray, offset, size, input_buffer->data());
+    //std::copy(input + offset, input + offset + size, input_buffer->begin());
+    //auto buffer = ((const float* const) env->GetDirectBufferAddress(input)) + offset;
+
+    const std::vector<complex<float>>& fft_buffer = fft->compute_fft(*input_buffer);
+
+    env->SetFloatArrayRegion(
+            fftBufferArray,
+            0,
+            fft_buffer.size() * 2,
+            reinterpret_cast<const float*>(fft_buffer.data())
     );
+    return detection_function->processFrequencyDomain(fft_buffer);
 }

@@ -17,7 +17,7 @@ public interface AudioInput extends Runnable {
     void startFetchingAudio();
 
     interface AudioListener {
-        void onAudio(ByteBuffer buffer);
+        void onAudio(float[] buffer);
         void onStart();
     }
 }

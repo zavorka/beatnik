@@ -33,7 +33,7 @@ public class BeatAnalyzer
     }
 
     public BeatAnalyzer(BeatnikOptions options, int bufferSize) {
-        tempBuffer = ByteBuffer.allocateDirect(bufferSize * Double.SIZE)
+        tempBuffer = ByteBuffer.allocate(bufferSize * Double.SIZE)
                 .asDoubleBuffer();
         tempBuffer.clear();
         init(
@@ -59,7 +59,7 @@ public class BeatAnalyzer
 
 
     @Override
-    public void onProcessorOutput(double output) {
+    public void onProcessorOutput(double output, float[] frequencyDomain) {
         synchronized (this) {
             if (ongoingAnalysis) {
                 tempBuffer.put(output);

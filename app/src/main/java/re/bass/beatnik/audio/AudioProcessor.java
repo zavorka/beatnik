@@ -8,7 +8,10 @@ public interface AudioProcessor extends AudioInput.AudioListener {
     void addOnProcessorOutputListener(OnProcessorOutputListener listener);
     void removeOnProcessorOutputListener(OnProcessorOutputListener listener);
 
+    int getWindowSize();
+    int getFFTSize();
+
     interface OnProcessorOutputListener {
-        void onProcessorOutput(double output);
+        void onProcessorOutput(double output, float[] frequencyDomain);
     }
 }

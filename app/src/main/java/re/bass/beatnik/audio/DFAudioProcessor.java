@@ -1,5 +1,7 @@
 package re.bass.beatnik.audio;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,8 @@ public class DFAudioProcessor implements AudioProcessor
     private final int sampleRate;
     private boolean initialized = false;
 
+    private final float[] fftBuffer;
+
     private final List<OnProcessorOutputListener> outputListeners =
             new ArrayList<>();
 
@@ -26,6 +30,8 @@ public class DFAudioProcessor implements AudioProcessor
         sampleRate = options.getSampleRate();
         stepSize = options.getStepSize();
         windowSize = options.getWindowSize();
+
+        fftBuffer = new float[windowSize + 2];
     }
 
     private native void init(
@@ -34,27 +40,27 @@ public class DFAudioProcessor implements AudioProcessor
             int windowSize
     );
     private native double processAudio(
-            ByteBuffer buffer,
+            float[] buffer,
             int offset,
-            int size
+            int size,
+            float[] fftBuffer
     );
 
     @Override
     public void onStart() {
         init(sampleRate, stepSize, windowSize);
+        Log.v(TAG, "Initialized.");
         this.initialized = true;
     }
 
     @Override
-    public void onAudio(ByteBuffer buffer) {
+    public void onAudio(float[] buffer) {
         if (!initialized) {
             throw new RuntimeException("Not initialized yet.");
         }
-        final int capacityInFloats =
-                buffer.capacity() / (Float.SIZE / Byte.SIZE);
 
-        for (int i = 0; i < capacityInFloats; i += stepSize) {
-            double dfOutput = processAudio(buffer, i, stepSize);
+        for (int i = 0; i < buffer.length; i += stepSize) {
+            double dfOutput = processAudio(buffer, i, stepSize, fftBuffer);
             notifyOutputListeners(dfOutput);
         }
     }
@@ -62,7 +68,7 @@ public class DFAudioProcessor implements AudioProcessor
     private void notifyOutputListeners(double dfOutput) {
         synchronized (this) {
             for (OnProcessorOutputListener listener : outputListeners) {
-                listener.onProcessorOutput(dfOutput);
+                listener.onProcessorOutput(dfOutput, fftBuffer);
             }
         }
     }
@@ -83,5 +89,15 @@ public class DFAudioProcessor implements AudioProcessor
         synchronized (this) {
             outputListeners.remove(listener);
         }
+    }
+
+    @Override
+    public int getWindowSize() {
+        return windowSize;
+    }
+
+    @Override
+    public int getFFTSize() {
+        return getWindowSize() / 2 + 1;
     }
 }

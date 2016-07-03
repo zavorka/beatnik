@@ -10,6 +10,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,12 +31,13 @@ public class Microphone extends Thread
     private int stepSize;
 
     private final static int AUDIO_SOURCE = MediaRecorder.AudioSource.MIC;
-    private final static short ENCODING = AudioFormat.ENCODING_PCM_FLOAT;
+    private final static short ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private final static int CHANNEL_MASK = AudioFormat.CHANNEL_IN_MONO;
 
     private final static int NOTIFICATION_PERIOD_IN_BUFFERS = 100;
 
-    private ByteBuffer buffer;
+    private short[] shortBuffer;
+    private float[] buffer;
     private int bufferSize = 0;
 
     private boolean started = false;
@@ -46,8 +48,8 @@ public class Microphone extends Thread
         this.sampleRate = options.getSampleRate();
         this.stepSize = options.getStepSize();
 
-        buffer = ByteBuffer.allocateDirect(getBufferSizeInBytes());
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        buffer = new float[getBufferSize()];
+        shortBuffer = new short[getBufferSize()];
     }
 
     @Override
@@ -76,7 +78,10 @@ public class Microphone extends Thread
         notifyOnStartListeners();
 
         while (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-            record.read(buffer, buffer.capacity(), AudioRecord.READ_BLOCKING);
+            record.read(shortBuffer, 0, shortBuffer.length);
+            for (int i = 0; i < shortBuffer.length; i++) {
+                buffer[i] = ((float) shortBuffer[i]) / ((float) Short.MAX_VALUE);
+            }
             notifyOnAudioListeners();
         }
     }
@@ -163,16 +168,13 @@ public class Microphone extends Thread
     }
 
     private AudioRecord buildAudioRecord () {
-        return new AudioRecord.Builder()
-                .setAudioSource(AUDIO_SOURCE)
-                .setAudioFormat(new AudioFormat.Builder()
-                        .setEncoding(ENCODING)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(CHANNEL_MASK)
-                        .build()
-                )
-                .setBufferSizeInBytes(getBufferSizeInBytes())
-                .build();
+        return new AudioRecord(
+                AUDIO_SOURCE,
+                sampleRate,
+                CHANNEL_MASK,
+                ENCODING,
+                getBufferSize() * (Short.SIZE / Byte.SIZE)
+        );
     }
 
     private class SampleRateMonitor
@@ -216,7 +218,7 @@ public class Microphone extends Thread
         }
 
         @Override
-        public void onAudio(ByteBuffer buffer) {
+        public void onAudio(float[] buffer) {
             synchronized (this) {
                 receivedSamplesSinceLastNotification += getBufferSize();
             }
