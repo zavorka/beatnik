@@ -66,6 +66,23 @@ namespace reBass {
             return cache;
         }
 
+        float get_normalization_correction() const {
+            switch (type) {
+                case rectangular:
+                    return 0.5f;
+                case hamming:
+                    return 0.54f;
+                case hanning:
+                    return 0.50f;
+                case blackman:
+                    return 0.42f;
+                case blackman_harris:
+                    return 0.35875f;
+                default:
+                    return 1.0f;
+            }
+        }
+
     private:
         Window_type type;
         size_t size;

@@ -28,7 +28,7 @@ namespace reBass
               windowed_buffer(window_size),
               callback { nullptr },
               fft_config {
-                      kiss_fftr_alloc(window_size, 0, 0, 0),
+                      kiss_fftr_alloc((int) window_size, 0, 0, 0),
                       kiss_fftr_free
               },
               fft_buffer(get_frequency_data_buffer_size()),
@@ -64,6 +64,7 @@ namespace reBass
                 &windowed_buffer[0],
                 reinterpret_cast<kiss_fft_cpx*>(&fft_buffer[0])
         );
+        normalize_frequency_data();
 
         if (callback != nullptr) {
             (*callback)(fft_buffer);
@@ -94,6 +95,7 @@ namespace reBass
                 &windowed_buffer[0],
                 reinterpret_cast<kiss_fft_cpx*>(&fft_buffer[0])
         );
+        normalize_frequency_data();
 
         if (callback != nullptr) {
             (*callback)(fft_buffer);
@@ -101,7 +103,18 @@ namespace reBass
         return fft_buffer;
     }
 
-
+    void FFT_rolling::normalize_frequency_data()
+    {
+        float correction = 1.f
+             / (window_size / 2 * window.get_normalization_correction());
+        std::for_each(
+            fft_buffer.begin(),
+            fft_buffer.end(),
+            [correction] (std::complex<float> &value) {
+                value *= correction;
+            }
+        );
+    }
 
     size_t FFT_rolling::get_frequency_data_buffer_size() const {
         return window_size / 2 + 1;

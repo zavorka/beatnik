@@ -21,11 +21,22 @@ namespace reBass {
         typedef std::function<void (const std::vector<std::complex<float>>&)> FFT_callback;
         FFT_rolling(size_t window_size);
         FFT_rolling(size_t window_size, size_t history_buffer_size);
-        const std::vector<std::complex<float>> &compute_fft(const std::vector<float>& buffer);
-        const std::vector<std::complex<float>> &compute_fft(const float * buffer, size_t length);
-        const std::vector<std::complex<float>> &get_frequency_domain_data() const;
+
+        const std::vector<std::complex<float>>&
+            compute_fft(const std::vector<float>& buffer);
+
+        const std::vector<std::complex<float>>&
+            compute_fft(
+                const float * buffer,
+                size_t length
+            );
+
+        const std::vector<std::complex<float>>&
+                get_frequency_domain_data()
+                const;
     private:
         size_t get_frequency_data_buffer_size() const;
+        void normalize_frequency_data();
 
         const size_t window_size;
         const Window<float> window;
