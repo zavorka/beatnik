@@ -22,6 +22,8 @@ import re.bass.beatnik.audio.AudioProcessor;
 import re.bass.beatnik.audio.BeatAnalyzer;
 import re.bass.beatnik.audio.DFAudioProcessor;
 import re.bass.beatnik.audio.Microphone;
+import re.bass.beatnik.plot.FFTPlotView;
+import re.bass.beatnik.plot.RollingPlotView;
 
 public class MainActivity
         extends AppCompatActivity
@@ -40,6 +42,8 @@ public class MainActivity
     @BindView(R.id.bpm_number_text) TextView bpmNumberText;
 	@BindView(R.id.bpm_unit_text) TextView bpmUnitText;
     @BindView(R.id.fuck_off_text) TextView fuckOffText;
+    @BindView(R.id.df_view) RollingPlotView dfView;
+    @BindView(R.id.fft_view) FFTPlotView fftView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,6 +77,28 @@ public class MainActivity
         analyzer = new BeatAnalyzer(options);
 
         input.addListener(processor);
+        processor.addOnProcessorOutputListener(
+                new AudioProcessor.OnProcessorOutputListener() {
+                    @Override
+                    public void onProcessorOutput(
+                            double output,
+                            float[] frequencyDomain
+                    ) {
+                        fftView.updateWithFFTData(frequencyDomain);
+                    }
+                }
+        );
+        processor.addOnProcessorOutputListener(
+                new AudioProcessor.OnProcessorOutputListener() {
+                    @Override
+                    public void onProcessorOutput(
+                            double output,
+                            float[] frequencyDomain
+                    ) {
+                        dfView.appendValue((float) output / 512);
+                    }
+        });
+
         processor.addOnProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
     }
@@ -99,6 +125,9 @@ public class MainActivity
             @Override
             public void run() {
                 Log.v(TAG, "BPM calculated: " + String.valueOf(bpm));
+                if (Float.isNaN(bpm)) {
+                    return;
+                }
                 bpmUnitText.setVisibility(View.VISIBLE);
                 bpmNumberText.setText(getString(R.string.bpm_value, bpm));
             }

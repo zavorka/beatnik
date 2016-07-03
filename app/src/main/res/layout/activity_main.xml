@@ -49,6 +49,22 @@
 				android:layout_marginStart="5dp"
 				android:visibility="gone"/>
 		</LinearLayout>
+
+		<re.bass.beatnik.plot.RollingPlotView
+		    android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/bpm_layout"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="60dp"
+            android:id="@+id/df_view"/>
+
+		<re.bass.beatnik.plot.FFTPlotView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_below="@+id/bpm_layout"
+			android:layout_centerHorizontal="true"
+			android:layout_marginTop="10dp"
+			android:id="@+id/fft_view"/>
 	</RelativeLayout>
 
 </android.support.design.widget.CoordinatorLayout>
