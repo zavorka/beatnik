@@ -16,7 +16,7 @@ import re.bass.beatnik.OnStopListener;
  */
 
 public class BeatAnalyzer
-        implements AudioProcessor.OnProcessorOutputListener,
+        implements DFProcessor.OnProcessorOutputListener,
         OnStopListener
 {
     private static final int DEFAULT_BUFFER_SIZE = 2048;
@@ -54,15 +54,14 @@ public class BeatAnalyzer
             int blockSize
     );
     private native void enqueueDFValue(double dfValue);
+    private native void enqueueDFValues(double[] values);
     private native float getBPM();
     private native void clearData();
 
 
     @Override
     public void onProcessorOutput(
-            double output,
-            float[] frequencyDomain,
-            float[] magnitudes
+            double[] output
     ) {
         synchronized (this) {
             if (ongoingAnalysis) {
@@ -74,7 +73,7 @@ public class BeatAnalyzer
                     enqueueDFValue(tempBuffer.get(i));
                 }
                 tempBuffer.clear();
-                enqueueDFValue(output);
+                enqueueDFValues(output);
             }
         }
     }

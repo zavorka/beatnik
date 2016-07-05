@@ -26,6 +26,7 @@ public class Microphone extends Thread
         implements AudioInput
 {
     private final static String TAG = "Microphone";
+    private static final int MIN_BUFFER_SIZE = 2048;
 
     private int sampleRate;
     private int stepSize;
@@ -164,7 +165,7 @@ public class Microphone extends Thread
                 "Reported native audio sample rate: %d",
                 AudioTrack.getNativeOutputSampleRate(STREAM_MUSIC)
         ));
-        return stepSize * steps;
+        return Math.max(stepSize * steps, MIN_BUFFER_SIZE);
     }
 
     private AudioRecord buildAudioRecord () {

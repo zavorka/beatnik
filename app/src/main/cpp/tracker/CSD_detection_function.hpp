@@ -21,6 +21,7 @@ namespace reBass
                 const std::vector<std::complex<float>>& fft
         );
 
+        constexpr static double DF_OUTPUT_VALUE_MULTIPLIER = 512;
     private:
         struct DFData
         {

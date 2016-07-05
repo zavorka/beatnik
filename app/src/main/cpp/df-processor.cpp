@@ -22,11 +22,9 @@ static reBass::CSD_detection_function* detection_function;
 
 static std::vector<float>* input_buffer;
 
-static size_t called = 0;
-
 extern "C"
 void
-Java_re_bass_beatnik_audio_DFAudioProcessor_init(
+Java_re_bass_beatnik_audio_NativeDFProcessor_init(
         JNIEnv* env,
         jobject object, /* this */
         jint sampleRate,
@@ -42,32 +40,61 @@ Java_re_bass_beatnik_audio_DFAudioProcessor_init(
 }
 
 extern "C"
-double
-Java_re_bass_beatnik_audio_DFAudioProcessor_processAudio(
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
     JNIEnv* env,
     jobject object, /* this */
     jfloatArray inputArray,
-    jint offset,
-    jint size,
-    jfloatArray fftBufferArray,
-    jfloatArray magnitudesArray
+    jdoubleArray outputArray
 ) {
-    env->GetFloatArrayRegion(inputArray, offset, size, input_buffer->data());
-    auto fft_buffer = fft->compute_fft(*input_buffer);
+    auto windows_count = env->GetArrayLength(outputArray);
+    auto step_size = input_buffer->size();
+    auto output = env->GetDoubleArrayElements(outputArray, nullptr);
 
-    env->SetFloatArrayRegion(
-            fftBufferArray,
-            0,
-            fft_buffer.size() * 2,
-            reinterpret_cast<const float*>(fft_buffer.data())
-    );
+    for (unsigned short i = 0; i < windows_count; i++) {
+        env->GetFloatArrayRegion(
+                inputArray,
+                i * step_size,
+                step_size,
+                input_buffer->data()
+        );
 
-    auto magnitudes = fft->get_magnitudes();
+        auto fft_buffer = fft->compute_fft(*input_buffer);
+        output[i] = detection_function->process_frequency_domain(fft_buffer);
+        output[i] /= reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
+    }
+
+    env->ReleaseDoubleArrayElements(outputArray, output, 0);
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_calculateMagnitudes(
+        JNIEnv* env,
+        jobject object, /* this */
+        jfloatArray output
+) {
+    auto magnitudes = fft->calculate_magnitudes();
     env->SetFloatArrayRegion(
-            magnitudesArray,
+            output,
             0,
             magnitudes.size(),
             magnitudes.data()
     );
-    return detection_function->process_frequency_domain(fft_buffer);
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_getFrequencyData(
+        JNIEnv* env,
+        jobject object, /* this */
+        jfloatArray output
+) {
+    auto frequencyData = fft->get_frequency_domain_data();
+    env->SetFloatArrayRegion(
+            output,
+            0,
+            frequencyData.size() * 2,
+            reinterpret_cast<const float *>(frequencyData.data())
+    );
 }

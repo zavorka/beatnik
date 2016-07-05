@@ -75,4 +75,11 @@ public class RollingPlotView extends PlotView
         }
         dataChanged();
     }
+
+    public void appendArray(double[] array) {
+        synchronized (this) {
+            buffer.appendArray(array);
+        }
+        dataChanged();
+    }
 }

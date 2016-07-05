@@ -56,7 +56,7 @@ public class FFTPlotView extends PlotView
         }
     }
 
-    public void updateWithFFTData(float[] data) {
+    public void updateWithFFTMagnitudes(float[] data) {
         synchronized (this) {
             if (buffer == null || buffer.length != data.length) {
                 buffer = new float[data.length];

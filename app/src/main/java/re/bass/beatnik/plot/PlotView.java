@@ -177,6 +177,7 @@ public abstract class PlotView extends SurfaceView
         }
 
         canvas.drawLines(lines, paint);
+        needRedraw = false;
     }
 
     protected abstract void updateBuffer();
@@ -209,25 +210,26 @@ public abstract class PlotView extends SurfaceView
     public void run() {
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         while (running) {
-            if (!holder.getSurface().isValid()) {
-                try {
-                    Thread.sleep(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                Thread.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            if (!needRedraw) {
-                continue;
-            }
-            needRedraw = false;
-
-            Canvas canvas = holder.lockCanvas();
-            if (canvas == null) {
-                continue;
-            }
-            draw(canvas);
-            holder.unlockCanvasAndPost(canvas);
+            updatePlot();
         }
+    }
+
+    private void updatePlot() {
+        if (!running || !needRedraw || !holder.getSurface().isValid()) {
+            return;
+        }
+
+        Canvas canvas = holder.lockCanvas();
+        if (canvas == null) {
+            return;
+        }
+        draw(canvas);
+        holder.unlockCanvasAndPost(canvas);
     }
 
     protected void dataChanged() {

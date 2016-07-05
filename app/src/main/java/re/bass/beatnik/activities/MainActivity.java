@@ -18,9 +18,10 @@ import butterknife.OnClick;
 import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
-import re.bass.beatnik.audio.AudioProcessor;
+import re.bass.beatnik.audio.FFTProcessor;
+import re.bass.beatnik.audio.NativeDFProcessor;
+import re.bass.beatnik.audio.DFProcessor;
 import re.bass.beatnik.audio.BeatAnalyzer;
-import re.bass.beatnik.audio.DFAudioProcessor;
 import re.bass.beatnik.audio.Microphone;
 import re.bass.beatnik.plot.FFTPlotView;
 import re.bass.beatnik.plot.RollingPlotView;
@@ -73,35 +74,44 @@ public class MainActivity
 
         final BeatnikOptions options = new BeatnikOptions();
         input = new Microphone(options);
-        AudioProcessor processor = new DFAudioProcessor(options);
+        NativeDFProcessor processor = new NativeDFProcessor(options);
         analyzer = new BeatAnalyzer(options);
 
         input.addListener(processor);
-        processor.addOnProcessorOutputListener(
-                new AudioProcessor.OnProcessorOutputListener() {
+        processor.addOnNewFFTDataListener(
+                new FFTProcessor.OnNewFFTDataListener() {
                     @Override
-                    public void onProcessorOutput(
-                            double output,
-                            float[] frequencyDomain,
-                            float[] magnitudes
+                    public void onNewFFTData(
+                            FFTProcessor sender
                     ) {
-                        fftView.updateWithFFTData(magnitudes);
+                        fftView.updateWithFFTMagnitudes(sender.getMagnitudes());
                     }
                 }
         );
-        processor.addOnProcessorOutputListener(
-                new AudioProcessor.OnProcessorOutputListener() {
+        processor.addOnDFProcessorOutputListener(
+                new DFProcessor.OnProcessorOutputListener() {
                     @Override
                     public void onProcessorOutput(
-                            double output,
-                            float[] frequencyDomain,
-                            float[] magnitudes
+                            double[] output
                     ) {
-                        dfView.appendValue((float) output / 512);
+                        // a)
+                        /*
+                        double mean = 0;
+                        for (double value : output) {
+                            mean += value / output.length;
+                        }
+                        dfView.appendValue((float) mean);
+                        */
+
+                        // b)
+                        // dfView.appendArray(output);
+
+                        // c)
+                        dfView.appendValue((float) output[0]);
                     }
         });
 
-        processor.addOnProcessorOutputListener(analyzer);
+        processor.addOnDFProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
     }
 

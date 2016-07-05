@@ -1,11 +1,13 @@
 #include <jni.h>
 #include <android/log.h>
 
+#include "tracker/CSD_detection_function.hpp"
 #include "tracker/Beat_analyzer.hpp"
 
 #define TAG "BeatAnalyzer"
 
 static reBass::Beat_analyzer* analyzer = nullptr;
+static auto multiplier = reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
 
 extern "C"
 void
@@ -33,7 +35,29 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValue(
     if (analyzer == nullptr) {
         return;
     }
-    analyzer->enqueue_df_value(dfValue);
+    analyzer->enqueue_df_value(dfValue * multiplier);
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValues(
+        JNIEnv* env,
+        jobject object, /* this */
+        jdoubleArray valuesArray
+) {
+    if (analyzer == nullptr) {
+        return;
+    }
+
+    jsize length = env->GetArrayLength(valuesArray);
+    auto values = env->GetDoubleArrayElements(valuesArray, nullptr);
+
+
+    for (jsize i = 0; i < length; i++) {
+        analyzer->enqueue_df_value(values[i] *= multiplier);
+    }
+
+    env->ReleaseDoubleArrayElements(valuesArray, values, JNI_ABORT);
 }
 
 extern "C"

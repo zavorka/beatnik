@@ -26,16 +26,10 @@ namespace reBass {
             compute_fft(const std::vector<float>& buffer);
 
         const std::vector<std::complex<float>>&
-            compute_fft(
-                const float * buffer,
-                size_t length
-            );
-
-        const std::vector<std::complex<float>>&
                 get_frequency_domain_data()
                 const;
 
-        const std::vector<float>& get_magnitudes() const;
+        const std::vector<float>& calculate_magnitudes();
     private:
         size_t get_frequency_data_buffer_size() const;
         void normalize_frequency_data();
@@ -49,5 +43,7 @@ namespace reBass {
         std::vector<std::complex<float>> fft_buffer;
         std::vector<float> magnitudes_buffer;
         boost::circular_buffer<float> history_buffer;
+
+        const float normalization_coefficient;
     };
 }

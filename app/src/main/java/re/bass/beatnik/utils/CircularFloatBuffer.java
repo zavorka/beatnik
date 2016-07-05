@@ -27,21 +27,43 @@ public class CircularFloatBuffer
         int arrayStart = Math.max(0, array.length - capacity);
         int frontLength = Math.min(capacity - head, array.length);
 
-        System.arraycopy(
+        copyFloats(
                 array,
                 arrayStart,
-                buffer,
                 head,
                 frontLength
         );
         head += frontLength;
 
-        if (frontLength < buffer.length) {
+        if (head == buffer.length) {
             int backLength = array.length - (arrayStart + frontLength);
-            System.arraycopy(
+            copyFloats(
                     array,
                     array.length - backLength,
-                    buffer,
+                    0,
+                    backLength
+            );
+            head = backLength;
+        }
+    }
+
+    public void appendArray(double[] array) {
+        int arrayStart = Math.max(0, array.length - capacity);
+        int frontLength = Math.min(capacity - head, array.length);
+
+        copyDoubles(
+                array,
+                arrayStart,
+                head,
+                frontLength
+        );
+        head += frontLength;
+
+        if (head == buffer.length) {
+            int backLength = array.length - (arrayStart + frontLength);
+            copyDoubles(
+                    array,
+                    array.length - backLength,
                     0,
                     backLength
             );
@@ -56,6 +78,32 @@ public class CircularFloatBuffer
 
         System.arraycopy(buffer, head, out, 0, capacity - head);
         System.arraycopy(buffer, 0, out, capacity - head, head);
+    }
+
+    private void copyFloats(
+            float[] floats,
+            int inputStart,
+            int outputStart,
+            int length
+    ) {
+        System.arraycopy(
+                floats,
+                inputStart,
+                buffer,
+                outputStart,
+                length
+        );
+    }
+
+    private void copyDoubles(
+            double[] doubles,
+            int inputStart,
+            int outputStart,
+            int length
+    ) {
+        for (int i = 0; i < length; i++) {
+            buffer[outputStart + i] = (float) doubles[inputStart + i];
+        }
     }
 
     public class ArrayTooLargeException extends Exception {
