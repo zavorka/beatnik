@@ -57,9 +57,6 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValues(
 
 
     for (jsize i = 0; i < length; i++) {
-        if (std::isnan(values[i])) {
-            LOGE("DF value is NaN!");
-        }
         analyzer->enqueue_df_value(values[i] *= multiplier);
     }
 

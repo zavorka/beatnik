@@ -1,13 +1,11 @@
 #include <jni.h>
 #include <string>
 #include <vector>
-#include <android/log.h>
-#include <time.h>
-#include <sys/types.h>
 
 #include "beatnik/FFT_rolling.hpp"
 #include "tracker/CSD_detection_function.hpp"
 #include "tracker/Tracker.hpp"
+#include "log.h"
 
 #define TAG "beatnik"
 
@@ -57,6 +55,11 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
 
         auto fft_buffer = fft->compute_fft(*input_buffer);
         output[i] = detection_function->process_frequency_domain(fft_buffer);
+
+        if (std::isnan(output[i])) {
+            LOGE("DF value is NaN!");
+        }
+
         output[i] /= reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
     }
 
