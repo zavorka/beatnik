@@ -57,12 +57,9 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValues(
 
 
     for (jsize i = 0; i < length; i++) {
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCSimplifyInspection"
-        if (values[i] != values[i]) {
+        if (std::isnan(values[i])) {
             LOGE("DF value is NaN!");
         }
-#pragma clang diagnostic pop
         analyzer->enqueue_df_value(values[i] *= multiplier);
     }
 
