@@ -1,10 +1,13 @@
 #include <jni.h>
-#include <android/log.h>
 
 #include "tracker/CSD_detection_function.hpp"
 #include "tracker/Beat_analyzer.hpp"
+#include "log.h"
 
 #define TAG "BeatAnalyzer"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
 static reBass::Beat_analyzer* analyzer = nullptr;
 static auto multiplier = reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
@@ -54,6 +57,12 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValues(
 
 
     for (jsize i = 0; i < length; i++) {
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCSimplifyInspection"
+        if (values[i] != values[i]) {
+            LOGE("DF value is NaN!");
+        }
+#pragma clang diagnostic pop
         analyzer->enqueue_df_value(values[i] *= multiplier);
     }
 
@@ -83,3 +92,4 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_clearData(
     }
     analyzer->clear_data();
 }
+#pragma clang diagnostic pop
