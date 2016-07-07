@@ -45,24 +45,22 @@ public class RollingPlotView extends PlotView
             return;
         }
 
-        buffer = new CircularFloatBuffer(BUFFER_SIZE);
-        plotBuffer = new float[BUFFER_SIZE];
+        buffer = new CircularFloatBuffer(getPlotBufferSize());
 
         initialized = true;
     }
 
     @Override
-    protected void updateBuffer() {
-        try {
-            synchronized (this) {
-                buffer.copyFrontTo(plotBuffer);
-            }
-        } catch (CircularFloatBuffer.ArrayTooLargeException e) {
-            e.printStackTrace();
+    protected void updateBuffer(float[] out) {
+        synchronized (this) {
+            buffer.copyFrontTo(out);
         }
     }
 
     public void appendValue(float value) {
+        if ((toSkip = (toSkip - 1) % SKIP) != 0) {
+            return;
+        }
         synchronized (this) {
             buffer.append(value);
         }

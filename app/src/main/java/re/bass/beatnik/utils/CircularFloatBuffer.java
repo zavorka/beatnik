@@ -1,5 +1,9 @@
 package re.bass.beatnik.utils;
 
+import android.support.annotation.NonNull;
+
+import java.util.Locale;
+
 /**
  * Created by curly on 7/1/16.
  */
@@ -12,6 +16,15 @@ public class CircularFloatBuffer
     private int head;
 
     public CircularFloatBuffer(int capacity) {
+        if (capacity < 1) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            Locale.getDefault(),
+                            "Invalid capacity: %d, must be >0.", capacity
+                    )
+            );
+        }
+
         this.capacity = capacity;
         buffer = new float[this.capacity];
 
@@ -23,7 +36,7 @@ public class CircularFloatBuffer
         head = (head + 1) % capacity;
     }
 
-    public void appendArray(float[] array) {
+    public void appendArray(@NonNull float[] array) {
         int arrayStart = Math.max(0, array.length - capacity);
         int frontLength = Math.min(capacity - head, array.length);
 
@@ -47,7 +60,7 @@ public class CircularFloatBuffer
         }
     }
 
-    public void appendArray(double[] array) {
+    public void appendArray(@NonNull double[] array) {
         int arrayStart = Math.max(0, array.length - capacity);
         int frontLength = Math.min(capacity - head, array.length);
 
@@ -71,13 +84,28 @@ public class CircularFloatBuffer
         }
     }
 
-    public void copyFrontTo(float[] out) throws ArrayTooLargeException {
-        if (out.length > capacity) {
-            throw new ArrayTooLargeException();
+    public void copyFrontTo(@NonNull float[] out) {
+        if (out.length >= capacity) {
+            System.arraycopy(buffer, head, out, 0, capacity - head);
+            System.arraycopy(buffer, 0, out, capacity - head, head);
+        } else if (out.length <= head) {
+            System.arraycopy(
+                    buffer,
+                    head - out.length,
+                    out,
+                    0,
+                    out.length
+            );
+        } else {
+            System.arraycopy(buffer, 0, out, out.length - head, head);
+            System.arraycopy(
+                    buffer,
+                    capacity + head - out.length,
+                    out,
+                    0,
+                    out.length - head
+            );
         }
-
-        System.arraycopy(buffer, head, out, 0, capacity - head);
-        System.arraycopy(buffer, 0, out, capacity - head, head);
     }
 
     private void copyFloats(
@@ -106,7 +134,17 @@ public class CircularFloatBuffer
         }
     }
 
-    public class ArrayTooLargeException extends Exception {
+    public float[] toArray() {
+        return toArray(capacity);
+    }
 
+    public float[] toArray(int length) {
+        if (length < 1) {
+            throw new IllegalArgumentException("Invalid array length.");
+        }
+        float[] array = new float[length];
+        copyFrontTo(array);
+
+        return array;
     }
 }
