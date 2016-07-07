@@ -12,7 +12,10 @@ import re.bass.beatnik.utils.CircularFloatBuffer;
 public class RollingPlotView extends PlotView
 {
     private static final String TAG = "RollingPlotView";
-    private static final int BUFFER_SIZE = 512;
+    private static final int BUFFER_SIZE = 2048;
+
+    private static final int SKIP = 8;
+    private int toSkip = 0;
 
     private CircularFloatBuffer buffer;
 
@@ -68,16 +71,14 @@ public class RollingPlotView extends PlotView
     }
 
     public void appendArray(float[] array) {
-        synchronized (this) {
-            buffer.appendArray(array);
+        for (float value : array) {
+            appendValue(value);
         }
-        dataChanged();
     }
 
     public void appendArray(double[] array) {
-        synchronized (this) {
-            buffer.appendArray(array);
+        for (double value : array) {
+            appendValue((float) value);
         }
-        dataChanged();
     }
 }

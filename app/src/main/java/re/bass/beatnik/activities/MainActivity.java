@@ -111,10 +111,10 @@ public class MainActivity
                         */
 
                         // b)
-                        // dfView.appendArray(output);
+                        dfView.appendArray(output);
 
                         // c)
-                        dfView.appendValue((float) output[0]);
+                        // dfView.appendValue((float) output[0]);
                     }
         });
 

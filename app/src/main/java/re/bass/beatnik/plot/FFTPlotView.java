@@ -41,18 +41,33 @@ public class FFTPlotView extends PlotView
     }
 
     @Override
-    protected void updateBuffer()
+    protected void updateBuffer(float[] out)
     {
         if (buffer == null) {
             return;
         }
+        int length = (buffer.length - 1) / 2;
 
         synchronized (this) {
-            if (plotBuffer == null || plotBuffer.length != buffer.length) {
-                plotBuffer = new float[buffer.length];
+            if (out.length == length) {
+                System.arraycopy(buffer, 0, out, 0, out.length);
             }
-
-            System.arraycopy(buffer, 0, plotBuffer, 0, buffer.length);
+            else if (out.length > length) {
+                int ratio = out.length / length;
+                for (int i = 0; i < buffer.length - 1; i++) {
+                    for (int j = 0; j < ratio; j++) {
+                        out[i * ratio + j] = ((ratio - j) * buffer[i] + j * buffer[i + 1]) / ratio;
+                    }
+                }
+            } else {
+                int ratio = length / out.length;
+                for (int i = 0; i < out.length; i++) {
+                    out[i] = 0;
+                    for (int j = 0; j < ratio; j++) {
+                        out[i] += buffer[i * ratio + j] / ratio;
+                    }
+                }
+            }
         }
     }
 

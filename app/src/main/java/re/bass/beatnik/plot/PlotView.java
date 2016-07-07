@@ -26,9 +26,9 @@ public abstract class PlotView extends SurfaceView
 {
     private static final String TAG = "PlotView";
     private static final int PIXELS_PER_LINE = 4;
-    private static final int MAX_POINTS = 512;
+    private static final int MAX_POINTS = 256;
 
-    protected float[] plotBuffer;
+    private final float[] plotBuffer = new float[MAX_POINTS];
     private float[] lines;
     private float[] points;
 
@@ -82,13 +82,13 @@ public abstract class PlotView extends SurfaceView
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder) {
+    public final void surfaceCreated(SurfaceHolder holder) {
         Log.v(TAG, "surfaceCreated()");
         this.holder = holder;
     }
 
     @Override
-    public void surfaceChanged(
+    public final void surfaceChanged(
             SurfaceHolder holder,
             int format,
             int width,
@@ -102,21 +102,16 @@ public abstract class PlotView extends SurfaceView
         ));
         stop();
 
+        /*
         int numberOfPoints = width / PIXELS_PER_LINE;
         int nextPower = 1;
         while (nextPower < numberOfPoints) {
             nextPower <<= 1;
         }
         int prevPower = nextPower / 2;
-        if ((numberOfPoints - prevPower) < (nextPower - numberOfPoints)) {
-            numberOfPoints = prevPower;
-        } else {
-            numberOfPoints = nextPower;
-        }
-
-        if (numberOfPoints > MAX_POINTS) {
-            numberOfPoints = MAX_POINTS;
-        }
+        numberOfPoints = Math.min(prevPower, MAX_POINTS);
+        */
+        int numberOfPoints = MAX_POINTS;
 
         lines = new float[(numberOfPoints - 1) * 4];
         points = new float[numberOfPoints];
@@ -125,7 +120,7 @@ public abstract class PlotView extends SurfaceView
     }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
+    public final void surfaceDestroyed(SurfaceHolder holder) {
         Log.v(TAG, "surfaceDestroyed()");
         stop();
     }
@@ -159,59 +154,51 @@ public abstract class PlotView extends SurfaceView
     }
 
     @Override
-    public void draw(Canvas canvas) {
+    public final void draw(Canvas canvas)
+    {
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-        updateBuffer();
-
-        int width = canvas.getWidth();
-        int height = canvas.getHeight();
-
+        updateBuffer(plotBuffer);
         synchronized (this) {
-            if (plotBuffer == null) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return;
-            }
-
-            updateLines(width, height);
+            calculateLines(canvas.getWidth(), canvas.getHeight());
         }
-
         canvas.drawLines(lines, paint);
         needRedraw = false;
     }
 
-    protected abstract void updateBuffer();
+    protected abstract void updateBuffer(float[] buffer);
 
-    private void updateLines(int width, int height) {
-        int valuesPerPoint = plotBuffer.length / points.length;
-        for (int i = 0; i < (points.length * valuesPerPoint); i++) {
-            points[i / valuesPerPoint] = plotBuffer[i] / valuesPerPoint;
+    protected final int getPlotBufferSize() {
+        return plotBuffer.length;
+    }
+
+    private void calculateLines(int width, int height)
+    {
+        if (plotBuffer.length == points.length) {
+            System.arraycopy(plotBuffer, 0, points, 0, points.length);
+        } else {
+            int ratio = plotBuffer.length / points.length;
+            for (int i = 0; i < points.length; i++) {
+                points[i] = 0;
+                for (int j = 0; j < ratio; j++) {
+                    points[i] += plotBuffer[i * ratio + j] / ratio;
+                }
+            }
         }
 
-        //int linesCount = lines.length / 4;
-        //float valuesPerLine = plotBuffer.length / (linesCount + 1);
-
-        float xScale = (float) width / (float) points.length;
-        float yScale = height * 2;
+        float xScale = (float) width / (float) (points.length - 1);
 
         for (int i = 1; i < points.length; i++) {
             lines[4 * i - 4] = xScale * (i - 1);
             lines[4 * i - 2] = xScale * (i);
-
-            lines[4 * i - 3] = height
-                    - (yScale * plotBuffer[i - 1]);
-            lines[4 * i - 1] = height
-                    - (yScale * plotBuffer[i]);
+            lines[4 * i - 3] = height - ((float) height * points[i - 1]);
+            lines[4 * i - 1] = height - ((float) height * points[i]);
         }
     }
 
 
     @Override
-    public void run() {
+    public final void run() {
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         while (running) {
             try {
@@ -236,7 +223,7 @@ public abstract class PlotView extends SurfaceView
         holder.unlockCanvasAndPost(canvas);
     }
 
-    protected void dataChanged() {
+    protected final void dataChanged() {
         needRedraw = true;
     }
 }
