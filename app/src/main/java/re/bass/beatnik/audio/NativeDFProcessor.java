@@ -6,12 +6,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import re.bass.beatnik.BeatnikOptions;
+import re.bass.beatnik.Destroyable;
 
 /**
  * Created by curly on 24/06/2016.
  */
 
-public class NativeDFProcessor implements DFProcessor, FFTProcessor
+public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
 {
     private final String TAG = "NativeDFProcessor";
 
@@ -46,6 +47,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor
             int stepSize,
             int windowSize
     );
+    private native void dealloc();
     private native void processAudio(
             float[] buffer,
             double[] output
@@ -164,5 +166,10 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor
     @Override
     public int getFFTSize() {
         return getWindowSize() / 2 + 1;
+    }
+
+    @Override
+    public void destroy() {
+        dealloc();
     }
 }

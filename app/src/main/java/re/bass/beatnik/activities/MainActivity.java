@@ -38,6 +38,7 @@ public class MainActivity
 
     private AudioInput input;
     private BeatAnalyzer analyzer;
+    private NativeDFProcessor processor;
 
     @BindView(R.id.content_layout) RelativeLayout content;
     @BindView(R.id.bpm_number_text) TextView bpmNumberText;
@@ -59,13 +60,19 @@ public class MainActivity
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        input.stopFetchingAudio();
+        analyzer.stop();
+        processor.destroy();
+        dfView.stop();
+        fftView.stop();
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
-        Log.v(TAG, "onStop()");
-
-        if (analyzer != null) {
-            analyzer.onStop();
-        }
+        Log.v(TAG, "stop()");
     }
 
     private void initialize() {
@@ -74,7 +81,7 @@ public class MainActivity
 
         final BeatnikOptions options = new BeatnikOptions();
         input = new Microphone(options);
-        NativeDFProcessor processor = new NativeDFProcessor(options);
+        processor = new NativeDFProcessor(options);
         analyzer = new BeatAnalyzer(options);
 
         input.addListener(processor);

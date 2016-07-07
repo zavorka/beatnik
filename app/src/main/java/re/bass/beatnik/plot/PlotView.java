@@ -12,6 +12,8 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import re.bass.beatnik.Stoppable;
+
 /**
  * Created by curly on 01/07/2016.
  */
@@ -19,7 +21,8 @@ import android.view.SurfaceView;
 public abstract class PlotView extends SurfaceView
         implements
         SurfaceHolder.Callback,
-        Runnable
+        Runnable,
+        Stoppable
 {
     private static final String TAG = "PlotView";
     private static final int PIXELS_PER_LINE = 4;
@@ -136,7 +139,8 @@ public abstract class PlotView extends SurfaceView
         thread.start();
     }
 
-    private void stop() {
+    @Override
+    public void stop() {
         if (!running) {
             return;
         }

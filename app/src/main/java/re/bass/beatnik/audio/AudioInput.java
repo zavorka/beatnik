@@ -15,6 +15,7 @@ public interface AudioInput extends Runnable {
     int getFrameSize();
 
     void startFetchingAudio();
+    void stopFetchingAudio();
 
     interface AudioListener {
         void onAudio(float[] buffer);

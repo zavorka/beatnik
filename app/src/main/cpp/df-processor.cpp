@@ -35,6 +35,24 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_init(
 
 extern "C"
 void
+Java_re_bass_beatnik_audio_NativeDFProcessor_dealloc(
+        JNIEnv* env,
+        jobject object /* this */
+) {
+    if (fft != nullptr) {
+        delete fft;
+    }
+    if (detection_function != nullptr) {
+        delete detection_function;
+    }
+    if (input_buffer != nullptr) {
+        delete input_buffer;
+    }
+}
+
+
+extern "C"
+void
 Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
     JNIEnv* env,
     jobject object, /* this */

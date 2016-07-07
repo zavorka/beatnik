@@ -9,15 +9,14 @@ import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
 import re.bass.beatnik.BeatnikOptions;
-import re.bass.beatnik.OnStopListener;
+import re.bass.beatnik.Stoppable;
 
 /**
  * Created by curly on 24/06/2016.
  */
 
 public class BeatAnalyzer
-        implements DFProcessor.OnProcessorOutputListener,
-        OnStopListener
+        implements DFProcessor.OnProcessorOutputListener
 {
     private static final int DEFAULT_BUFFER_SIZE = 2048;
 
@@ -58,6 +57,7 @@ public class BeatAnalyzer
     private native float getBPM();
     private native void clearData();
 
+    private Timer timer;
 
     @Override
     public void onProcessorOutput(
@@ -79,8 +79,8 @@ public class BeatAnalyzer
     }
 
     public void start() {
-        Timer calculateBPMTimer = new Timer(true);
-        calculateBPMTimer.scheduleAtFixedRate(new TimerTask() {
+        timer = new Timer(true);
+        timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 latch = new CountDownLatch(1);
@@ -95,11 +95,11 @@ public class BeatAnalyzer
                     latch = null;
                 }
             }
-        }, 10000, 5000); // TODO fixme!
+        }, 10000, 2000); // TODO fixme!
     }
-
-    @Override
-    public void onStop() {
+    
+    public void stop() {
+        timer.cancel();
         synchronized (this) {
             if (latch == null) {
                 clear();

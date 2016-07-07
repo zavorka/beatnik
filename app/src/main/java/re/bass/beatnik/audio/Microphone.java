@@ -26,7 +26,7 @@ public class Microphone extends Thread
         implements AudioInput
 {
     private final static String TAG = "Microphone";
-    private static final int MIN_BUFFER_SIZE = 2048;
+    private static final int MIN_BUFFER_SIZE = 1024;
 
     private int sampleRate;
     private int stepSize;
@@ -42,6 +42,7 @@ public class Microphone extends Thread
     private int bufferSize = 0;
 
     private boolean started = false;
+    private boolean running = true;
 
     private List<AudioListener> listeners = new ArrayList<>();
 
@@ -64,28 +65,31 @@ public class Microphone extends Thread
             );
         }
 
-        SampleRateMonitor monitor = new SampleRateMonitor();
-        addListener(monitor);
-        record.setPositionNotificationPeriod(
-                getBufferSize() * NOTIFICATION_PERIOD_IN_BUFFERS
-        );
-        Log.v(TAG, String.format(
-                "Position notification period set to %d frames",
-                NOTIFICATION_PERIOD_IN_BUFFERS * getBufferSize()
-        ));
-        record.setRecordPositionUpdateListener(monitor);
-
         record.startRecording();
         notifyOnStartListeners();
 
-        while (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+        running = true;
+
+        while (running && record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
             record.read(shortBuffer, 0, shortBuffer.length);
             for (int i = 0; i < shortBuffer.length; i++) {
                 buffer[i] = ((float) shortBuffer[i]) / ((float) Short.MAX_VALUE);
             }
             notifyOnAudioListeners();
         }
+        record.stop();
+        record.release();
     }
+
+    public void stopFetchingAudio() {
+        running = false;
+        try {
+            this.join();
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+        }
+    }
+
 
     private void notifyOnStartListeners() {
         synchronized (this) {
@@ -176,58 +180,5 @@ public class Microphone extends Thread
                 ENCODING,
                 getBufferSize() * (Short.SIZE / Byte.SIZE)
         );
-    }
-
-    private class SampleRateMonitor
-            implements
-            AudioRecord.OnRecordPositionUpdateListener,
-            AudioListener
-    {
-        private int receivedSamplesSinceLastNotification = 0;
-        private float lastReceivedSamplesRate = .0f;
-
-        private static final float RECEIVED_RATE_EPSILON = 1.f
-                / (NOTIFICATION_PERIOD_IN_BUFFERS - 1);
-        private static final String TAG = "SampleRateMonitor";
-
-        @Override
-        public void onMarkerReached(AudioRecord recorder) {
-
-        }
-
-        @Override
-        public void onPeriodicNotification(AudioRecord recorder) {
-            float receivedSamplesRate;
-            float notificationPeriod = recorder.getPositionNotificationPeriod();
-
-            synchronized (this) {
-                receivedSamplesRate = receivedSamplesSinceLastNotification
-                        / notificationPeriod;
-                receivedSamplesSinceLastNotification = 0;
-            }
-
-            if (Math.abs(lastReceivedSamplesRate - receivedSamplesRate)
-                    > RECEIVED_RATE_EPSILON) {
-                Log.w(TAG, String.format(
-                        "Received-samples rate changed from %f to %f",
-                        lastReceivedSamplesRate,
-                        receivedSamplesRate
-                ));
-            }
-
-            lastReceivedSamplesRate = receivedSamplesRate;
-        }
-
-        @Override
-        public void onAudio(float[] buffer) {
-            synchronized (this) {
-                receivedSamplesSinceLastNotification += getBufferSize();
-            }
-        }
-
-        @Override
-        public void onStart() {
-            receivedSamplesSinceLastNotification = 0;
-        }
     }
 }
