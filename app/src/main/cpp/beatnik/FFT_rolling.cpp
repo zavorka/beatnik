@@ -68,11 +68,7 @@ namespace reBass
                 &windowed_buffer[0],
                 reinterpret_cast<kiss_fft_cpx*>(&fft_buffer[0])
         );
-        normalize_frequency_data();
-
-        if (callback != nullptr) {
-            (*callback)(fft_buffer);
-        }
+        //normalize_frequency_data();
         return fft_buffer;
     }
 
@@ -103,8 +99,8 @@ namespace reBass
                 fft_buffer.begin(),
                 fft_buffer.end(),
                 magnitudes_buffer.begin(),
-                [] (const complex<float>& value) {
-                    return std::abs(value);
+                [this] (const complex<float>& value) {
+                    return std::abs(value * this->normalization_coefficient);
                 }
         );
 

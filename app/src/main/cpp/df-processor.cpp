@@ -28,7 +28,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_init(
     input_buffer = new vector<float>((size_t) stepSize);
     fft = new reBass::FFT_rolling((size_t) windowSize);
     detection_function = new reBass::CSD_detection_function(
-            (size_t) windowSize,
+            (size_t) (windowSize / 2 + 1),
             (size_t) stepSize
     );
 }
@@ -55,10 +55,6 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
 
         auto fft_buffer = fft->compute_fft(*input_buffer);
         output[i] = detection_function->process_frequency_domain(fft_buffer);
-
-        if (std::isnan(output[i])) {
-            LOGE("DF value is NaN!");
-        }
 
         output[i] /= reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
     }

@@ -3,9 +3,6 @@
 
 using std::complex;
 using std::vector;
-using std::abs;
-using std::arg;
-using std::polar;
 
 namespace reBass
 {
@@ -27,17 +24,17 @@ namespace reBass
             const vector<complex<float>> &fft
     ){
         for (size_t i = 0; i < frameLength; i++) {
-            data[i].magnitude = abs(fft[i]);
-            double theta = arg(fft[i]);
+            data[i].magnitude = std::abs(fft[i]);
+            double theta = std::arg(fft[i]);
 
-            double omega = (2 * PI * stepSize * i) / stepSize;
+            double omega = (PI * stepSize * i) / (frameLength - 1);
+
             double expected = data[i].phase + omega;
             double error = math_utilities::princarg(theta - expected);
 
             data[i].unwrapped = data[i].unwrapped + omega + error;
             data[i].phase = theta;
         }
-
         whiten();
 
         return complex_spectral_difference();
@@ -73,7 +70,7 @@ namespace reBass
             );
     	    double dev = math_utilities::princarg(phase);
 
-            val += abs(data[i].magHistory - polar(data[i].magnitude, dev));
+            val += std::abs(data[i].magHistory - std::polar(data[i].magnitude, dev));
 
     	    data[i].phaseHistoryOld = data[i].phaseHistory;
     	    data[i].phaseHistory = data[i].phase;
