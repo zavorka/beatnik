@@ -5,16 +5,13 @@ import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Process;
-import android.os.SystemClock;
 import android.util.Log;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import re.bass.beatnik.BeatnikOptions;
+import re.bass.beatnik.Startable;
 
 import static android.media.AudioManager.STREAM_MUSIC;
 
@@ -22,9 +19,37 @@ import static android.media.AudioManager.STREAM_MUSIC;
  * Created by curly on 22/06/2016.
  */
 
-public class Microphone extends Thread
-        implements AudioInput
+public class Microphone implements AudioInput
 {
+    class AudioThread extends Thread {
+        @Override
+        public void run() {
+            Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
+            AudioRecord record = buildAudioRecord();
+
+            if (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                throw new RuntimeException(
+                        "Recording has already started! (it shouldn't have)"
+                );
+            }
+
+            record.startRecording();
+            notifyOnStartListeners();
+
+            running = true;
+
+            while (running && record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
+                record.read(shortBuffer, 0, shortBuffer.length);
+                for (int i = 0; i < shortBuffer.length; i++) {
+                    buffer[i] = ((float) shortBuffer[i]) / ((float) Short.MAX_VALUE);
+                }
+                notifyOnAudioListeners();
+            }
+            record.stop();
+            record.release();
+        }
+    }
+
     private final static String TAG = "Microphone";
     private static final int MIN_BUFFER_SIZE = 2048;
 
@@ -44,6 +69,8 @@ public class Microphone extends Thread
     private boolean started = false;
     private boolean running = true;
 
+    private AudioThread thread;
+
     private List<AudioListener> listeners = new ArrayList<>();
 
     public Microphone(BeatnikOptions options) {
@@ -55,39 +82,20 @@ public class Microphone extends Thread
     }
 
     @Override
-    public void run() {
-        Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
-        AudioRecord record = buildAudioRecord();
-
-        if (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-            throw new RuntimeException(
-                    "Recording has already started! (it shouldn't have)"
-            );
-        }
-
-        record.startRecording();
-        notifyOnStartListeners();
-
-        running = true;
-
-        while (running && record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-            record.read(shortBuffer, 0, shortBuffer.length);
-            for (int i = 0; i < shortBuffer.length; i++) {
-                buffer[i] = ((float) shortBuffer[i]) / ((float) Short.MAX_VALUE);
-            }
-            notifyOnAudioListeners();
-        }
-        record.stop();
-        record.release();
+    public void start() {
+        thread = new AudioThread();
+        thread.start();
     }
 
-    public void stopFetchingAudio() {
+    @Override
+    public void stop() {
         running = false;
         try {
-            this.join();
+            thread.join();
         } catch (InterruptedException e) {
             Thread.interrupted();
         }
+        thread = null;
     }
 
 
@@ -146,10 +154,6 @@ public class Microphone extends Thread
         return Float.SIZE / Byte.SIZE;
     }
 
-    @Override
-    public void startFetchingAudio() {
-        start();
-    }
 
     private int getPreferredBufferSize() {
         final int minSize = AudioTrack.getMinBufferSize(

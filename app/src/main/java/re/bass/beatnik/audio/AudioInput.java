@@ -1,21 +1,18 @@
 package re.bass.beatnik.audio;
 
-import java.nio.ByteBuffer;
+import re.bass.beatnik.Startable;
 
 /**
  * Created by curly on 22/06/2016.
  */
 
-public interface AudioInput extends Runnable {
+public interface AudioInput extends Startable {
     void addListener(AudioListener listener); // no pun intended
     void removeListener(AudioListener listener);
 
     int getBufferSize();
     int getBufferSizeInBytes();
     int getFrameSize();
-
-    void startFetchingAudio();
-    void stopFetchingAudio();
 
     interface AudioListener {
         void onAudio(float[] buffer);

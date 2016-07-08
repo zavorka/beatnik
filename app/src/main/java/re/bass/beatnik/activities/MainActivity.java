@@ -56,23 +56,28 @@ public class MainActivity
         ButterKnife.bind(this);
 
         initialize();
-        getRecordingPermissionAndStart();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        input.stopFetchingAudio();
-        analyzer.stop();
-        processor.destroy();
-        dfView.stop();
-        fftView.stop();
+    protected void onStart() {
+        super.onStart();
+
+        getRecordingPermissionAndStart();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
         Log.v(TAG, "stop()");
+
+        input.stop();
+        analyzer.stop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        processor.destroy();
     }
 
     private void initialize() {
@@ -124,7 +129,7 @@ public class MainActivity
 
     private void startRecording() {
         Log.v(TAG, "startRecording()");
-        input.startFetchingAudio();
+        input.start();
         analyzer.start();
     }
 

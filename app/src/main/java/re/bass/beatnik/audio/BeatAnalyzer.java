@@ -9,7 +9,6 @@ import java.util.TimerTask;
 import java.util.concurrent.CountDownLatch;
 
 import re.bass.beatnik.BeatnikOptions;
-import re.bass.beatnik.Stoppable;
 
 /**
  * Created by curly on 24/06/2016.
@@ -40,10 +39,6 @@ public class BeatAnalyzer
                 options.getStepSize(),
                 options.getWindowSize()
         );
-    }
-
-    private synchronized boolean isOngoingAnalysis() {
-        return ongoingAnalysis;
     }
 
 
