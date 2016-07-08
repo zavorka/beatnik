@@ -26,7 +26,7 @@ public class Microphone extends Thread
         implements AudioInput
 {
     private final static String TAG = "Microphone";
-    private static final int MIN_BUFFER_SIZE = 1024;
+    private static final int MIN_BUFFER_SIZE = 2048;
 
     private int sampleRate;
     private int stepSize;

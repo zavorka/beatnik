@@ -67,6 +67,11 @@ public abstract class PlotView extends SurfaceView
         if (initialized) {
             return;
         }
+        initialized = true;
+
+        if (isInEditMode()) {
+            return;
+        }
 
         paint = new Paint();
         paint.setColor(Color.WHITE);
@@ -77,8 +82,6 @@ public abstract class PlotView extends SurfaceView
         setZOrderOnTop(true);
         getHolder().setFormat(PixelFormat.TRANSPARENT);
         getHolder().addCallback(this);
-
-        initialized = true;
     }
 
     @Override
@@ -202,9 +205,11 @@ public abstract class PlotView extends SurfaceView
         Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         while (running) {
             try {
-                Thread.sleep(1);
+                synchronized (this) {
+                    wait();
+                }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Thread.interrupted();
             }
             updatePlot();
         }
@@ -225,5 +230,8 @@ public abstract class PlotView extends SurfaceView
 
     protected final void dataChanged() {
         needRedraw = true;
+        synchronized (this) {
+            notify();
+        }
     }
 }
