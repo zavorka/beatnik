@@ -1,10 +1,7 @@
 <resources>
-    <string name="app_name">beatnik</string>
+    <string name="app_name">Beatnik</string>
     <string name="bpm_value">%1$.1f</string>
     <string name="bpm_unit">bpm</string>
     <string name="bpm_nan">000.0</string>
-    <string name="nopeville">Since access to the mic is quite essential for the\
-        app\'s core functionality, it won\'t do anything until you make your \
-        mind up. If you\'re unhappy with this behavior, ask on Play Store for \
-        refund. Tap here to try again when you change your mind.</string>
+    <string name="nopeville">Since access to the mic is quite essential for the app\'s core functionality, it won\'t do anything until you change your mind up. If you\'re unhappy with this behavior, ask on Play Store for refund. Tap here to try again when you change your mind.</string>
 </resources>
