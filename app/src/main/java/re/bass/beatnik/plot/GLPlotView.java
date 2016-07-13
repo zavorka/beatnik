@@ -4,6 +4,8 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 
+import re.bass.beatnik.utils.MultisampleConfigChooser;
+
 /**
  * Created by curly on 7/8/16.
  */
@@ -24,6 +26,7 @@ public class GLPlotView extends GLSurfaceView
         setEGLContextClientVersion(2);
 
         renderer = new PlotRenderer(MAX_POINTS);
+        setEGLConfigChooser(new MultisampleConfigChooser());
         setRenderer(renderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
