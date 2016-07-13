@@ -8,8 +8,8 @@ android {
         applicationId "re.bass.beatnik"
         minSdkVersion 19
         targetSdkVersion 24
-        versionCode 5
-        versionName "0.2.2"
+        versionCode 6
+        versionName "0.3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         ndkBuild {
             arguments "NDK_APPLICATION_MK:=Application.mk"
