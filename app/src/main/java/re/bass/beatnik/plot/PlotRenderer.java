@@ -8,7 +8,6 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL;
 import javax.microedition.khronos.opengles.GL10;
 
 /**
@@ -96,7 +95,7 @@ public class PlotRenderer implements GLSurfaceView.Renderer
 
     private void initXBuffer() {
         for (int i = 0; i < pointsCount; i++) {
-            xBuffer.put((float) i / (float) pointsCount);
+            xBuffer.put((float) i / (float) (pointsCount - 1));
         }
         xBuffer.position(0);
     }
