@@ -50,7 +50,7 @@
 				android:visibility="gone"/>
 		</LinearLayout>
 
-		<re.bass.beatnik.plot.FFTGLPlotView
+		<re.bass.beatnik.plot.RollingGLPlotView
 		    android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@+id/bpm_layout"
@@ -58,7 +58,7 @@
             android:layout_marginBottom="60dp"
             android:id="@+id/df_view"/>
 
-		<re.bass.beatnik.plot.FFTPlotView
+		<re.bass.beatnik.plot.FFTGLPlotView
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:layout_below="@+id/bpm_layout"

@@ -18,15 +18,14 @@ import butterknife.OnClick;
 import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
-import re.bass.beatnik.audio.FFTProcessor;
-import re.bass.beatnik.audio.NativeDFProcessor;
-import re.bass.beatnik.audio.DFProcessor;
 import re.bass.beatnik.audio.BeatAnalyzer;
+import re.bass.beatnik.audio.DFProcessor;
+import re.bass.beatnik.audio.FFTProcessor;
 import re.bass.beatnik.audio.Microphone;
+import re.bass.beatnik.audio.NativeDFProcessor;
 import re.bass.beatnik.plot.FFTGLPlotView;
-import re.bass.beatnik.plot.FFTPlotView;
-import re.bass.beatnik.plot.GLPlotView;
-import re.bass.beatnik.plot.RollingPlotView;
+import re.bass.beatnik.plot.RollingGLPlotView;
+import re.bass.beatnik.utils.CPUFeatures;
 
 public class MainActivity
         extends AppCompatActivity
@@ -46,13 +45,14 @@ public class MainActivity
     @BindView(R.id.bpm_number_text) TextView bpmNumberText;
 	@BindView(R.id.bpm_unit_text) TextView bpmUnitText;
     @BindView(R.id.fuck_off_text) TextView fuckOffText;
-    @BindView(R.id.df_view) FFTGLPlotView dfView;
-    @BindView(R.id.fft_view) FFTPlotView fftView;
+    @BindView(R.id.df_view) RollingGLPlotView dfView;
+    @BindView(R.id.fft_view) FFTGLPlotView fftView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "onCreate()");
+        CPUFeatures.logFeatures();
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
@@ -102,18 +102,6 @@ public class MainActivity
                     }
                 }
         );
-        processor.addOnNewFFTDataListener(
-                new FFTProcessor.OnNewFFTDataListener() {
-                    @Override
-                    public void onNewFFTData(
-                            FFTProcessor sender
-                    ) {
-                        dfView.updateWithFFTMagnitudes(sender.getMagnitudes());
-                    }
-                }
-        );
-
-        /*
         processor.addOnDFProcessorOutputListener(
                 new DFProcessor.OnProcessorOutputListener() {
                     @Override
@@ -123,7 +111,6 @@ public class MainActivity
                         dfView.appendArray(output);
                     }
         });
-        */
 
         processor.addOnDFProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
