@@ -18,8 +18,10 @@ public class BeatAnalyzer
         implements DFProcessor.OnProcessorOutputListener
 {
     private static final int DEFAULT_BUFFER_SIZE = 2048;
+    private static final int BEATS_BUFFER_SIZE = 128;
 
     private final DoubleBuffer tempBuffer;
+    private final float[] beatsBuffer;
 
     private volatile boolean ongoingAnalysis = false;
     private volatile CountDownLatch latch;
@@ -39,6 +41,8 @@ public class BeatAnalyzer
                 options.getStepSize(),
                 options.getWindowSize()
         );
+
+        beatsBuffer = new float[BEATS_BUFFER_SIZE];
     }
 
 
@@ -50,6 +54,7 @@ public class BeatAnalyzer
     private native void enqueueDFValue(double dfValue);
     private native void enqueueDFValues(double[] values);
     private native float getBPM();
+    private native float getBPMWithBeats(float[] beats);
     private native void clearData();
 
     private Timer timer;
@@ -82,7 +87,7 @@ public class BeatAnalyzer
                 synchronized (this) {
                     ongoingAnalysis = true;
                 }
-                float bpm = getBPM();
+                float bpm = getBPMWithBeats(beatsBuffer);
                 notifyBPMCalculated(bpm);
                 synchronized (this) {
                     ongoingAnalysis = false;
@@ -90,7 +95,7 @@ public class BeatAnalyzer
                     latch = null;
                 }
             }
-        }, 10000, 2000); // TODO fixme!
+        }, 5000, 5000); // TODO fixme!
     }
     
     public void stop() {
@@ -118,7 +123,7 @@ public class BeatAnalyzer
     }
 
     public interface OnBPMCalculatedListener {
-        void onBPMCalculated(float bpm);
+        void onBPMCalculated(float bpm, final float[] beats);
     }
 
     public void addOnBPMCalculatedListener(OnBPMCalculatedListener listener) {
@@ -136,7 +141,7 @@ public class BeatAnalyzer
     private void notifyBPMCalculated(float bpm) {
         synchronized (this) {
             for (OnBPMCalculatedListener listener : listeners) {
-                listener.onBPMCalculated(bpm);
+                listener.onBPMCalculated(bpm, beatsBuffer);
             }
         }
     }

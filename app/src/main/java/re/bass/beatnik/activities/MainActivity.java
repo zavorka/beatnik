@@ -16,6 +16,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import re.bass.beatnik.BeatnikOptions;
+import re.bass.beatnik.BuildConfig;
 import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
 import re.bass.beatnik.audio.BeatAnalyzer;
@@ -133,14 +134,20 @@ public class MainActivity
     }
 
     @Override
-    public void onBPMCalculated(final float bpm) {
+    public void onBPMCalculated(final float bpm, final float[] beats) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Log.v(TAG, "BPM calculated: " + String.valueOf(bpm));
+                if (BuildConfig.DEBUG) {
+                    Log.v(TAG, "BPM calculated: " + String.valueOf(bpm));
+                    for (int i = 0; i < beats.length && beats[i] > 0.0; i++) {
+                        Log.v(TAG, i + ": " + beats[i]);
+                    }
+                }
                 if (Float.isNaN(bpm)) {
                     return;
                 }
+
                 bpmUnitText.setVisibility(View.VISIBLE);
                 bpmNumberText.setText(getString(R.string.bpm_value, bpm));
             }

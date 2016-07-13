@@ -26,6 +26,7 @@ namespace reBass {
         Beat_analyzer(unsigned int inputSampleRate, size_t step_size, size_t window_size);
         std::vector<Beat> get_beats();
         float get_bpm();
+        float get_bpm(const std::vector<Beat>& beats);
         void enqueue_df_value(const double df_value);
         void clear_data();
     protected:

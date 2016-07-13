@@ -81,7 +81,7 @@ namespace reBass
                 }
             }
 
-            returnBeats.push_back(beat); // beats are output 0
+            returnBeats.push_back(beat);
         }
 
         return returnBeats;
@@ -89,15 +89,20 @@ namespace reBass
 
     float
     Beat_analyzer::get_bpm() {
-        auto bpms = get_beats();
-        size_t size = bpms.size();
-        if (size < 1) {
+        return get_bpm(get_beats());
+    }
+
+    float
+    Beat_analyzer::get_bpm(const std::vector<Beat> &beats)
+    {
+        size_t size = beats.size();
+        if (size < 4) {
             return NAN;
         }
 
-        RealTime timespan = (bpms.back().timestamp - bpms.front().timestamp);
+        RealTime timespan = (beats.back().timestamp - beats[2].timestamp);
         float seconds = timespan.sec + timespan.nsec/1.0E9f;
-        float bpm = 60 * (size - 1) / seconds;
+        float bpm = 60 * (size - 3) / seconds;
 
         while (bpm > 180.0) {
             bpm /= 2.0;
