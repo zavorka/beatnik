@@ -6,8 +6,8 @@ package re.bass.beatnik;
 
 public class BeatnikOptions {
     private static final int SAMPLE_RATE = 44100;
-    private static final int STEP_SIZE = 512;
-    private static final int WINDOW_SIZE = 1024;
+    private static final int STEP_SIZE = 128;
+    private static final int WINDOW_SIZE = 512;
 
     private int sampleRate;
     private int stepSize;
