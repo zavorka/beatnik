@@ -18,17 +18,14 @@ namespace reBass
     )
             : sample_rate(sample_rate),
               step_size(step_size),
-              window_size(window_size)
+              window_size(window_size),
+              df(MAX_BAR_DURATION_IN_SAMPLES / step_size)
     {
     }
 
     void
     Beat_analyzer::enqueue_df_value(const double df_value)
     {
-        if (df.size() >= 2048) {
-            df.erase(df.begin());
-        }
-
         df.push_back(df_value);
     }
 
@@ -48,8 +45,8 @@ namespace reBass
         }
 
         vector<double> df_vector {
-                df.cbegin() + 2,
-                df.cbegin() + nonZeroCount
+                df.begin() + 2,
+                df.begin() + nonZeroCount
         };
         vector<double> beatPeriod(nonZeroCount - 2);
 
