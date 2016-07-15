@@ -12,8 +12,9 @@ import re.bass.beatnik.utils.CircularFloatBuffer;
 public class RollingGLPlotView extends GLPlotView
 {
     private static final String TAG = "RollingGLPlotView";
-    private static final int SKIP = 4;
+    private static final int SKIP = 8;
 
+    private float averageValue = 0.f;
     private CircularFloatBuffer buffer;
     private float[] copy;
     private int toSkip = 0;
@@ -37,12 +38,14 @@ public class RollingGLPlotView extends GLPlotView
     }
 
     public void appendValue(float value) {
+        averageValue += value / SKIP;
         if ((toSkip = (toSkip - 1) % SKIP) != 0) {
             return;
         }
         synchronized (this) {
-            buffer.append(value);
+            buffer.append(averageValue);
         }
+        averageValue = 0.f;
         update();
     }
 
