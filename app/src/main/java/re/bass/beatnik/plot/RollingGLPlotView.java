@@ -38,7 +38,7 @@ public class RollingGLPlotView extends GLPlotView
     }
 
     public void appendValue(float value) {
-        averageValue += value / SKIP;
+        averageValue += value / SKIP * 4;
         if ((toSkip = (toSkip - 1) % SKIP) != 0) {
             return;
         }

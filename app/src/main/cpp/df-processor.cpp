@@ -7,10 +7,6 @@
 #include "tracker/Tracker.hpp"
 #include "log.h"
 
-#define TAG "beatnik"
-
-
-
 static reBass::FFT_rolling* fft;
 static reBass::CSD_detection_function* detection_function;
 

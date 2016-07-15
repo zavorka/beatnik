@@ -4,8 +4,6 @@
 #include "tracker/Beat_analyzer.hpp"
 #include "log.h"
 
-#define TAG "BeatAnalyzer"
-
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
