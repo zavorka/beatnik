@@ -35,9 +35,9 @@ namespace reBass
             data[i].unwrapped = data[i].unwrapped + omega + error;
             data[i].phase = theta;
         }
-        whiten();
+        //whiten();
 
-        return complex_spectral_difference();
+        return broadband();
     }
 
     void
@@ -75,6 +75,25 @@ namespace reBass
     	    data[i].phaseHistoryOld = data[i].phaseHistory;
     	    data[i].phaseHistory = data[i].phase;
     	    data[i].magHistory = data[i].magnitude;
+        }
+
+        return val;
+    }
+
+    double
+    CSD_detection_function::broadband()
+    {
+        double val = 0;
+
+        for (unsigned int i = 0; i < frameLength; i++) {
+            double squared_magnitude = data[i].magnitude * data[i].magnitude;
+            if (data[i].magHistory > 0.0) {
+                double diff = 10.0 * log10(squared_magnitude / data[i].magHistory);
+                if (diff > DB_RISE) {
+                    val = val + 1.0;
+                }
+            }
+            data[i].magHistory = squared_magnitude;
         }
 
         return val;

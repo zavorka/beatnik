@@ -22,6 +22,7 @@ namespace reBass
         );
 
         constexpr static double DF_OUTPUT_VALUE_MULTIPLIER = 512;
+        constexpr static double DB_RISE = 3.0;
     private:
         struct DFData
         {
@@ -39,6 +40,7 @@ namespace reBass
 
         void whiten();
         double complex_spectral_difference();
+        double broadband();
 
         unsigned int frameLength;
         unsigned int stepSize;
