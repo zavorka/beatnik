@@ -24,6 +24,12 @@ namespace reBass
                 std::size_t count
         );
 
+        float mean(
+                const std::vector<float> &data,
+                std::size_t start,
+                std::size_t count
+        );
+
         /**
          * The principle argument function. Map the phase angle ang into
          * the range [-pi,pi).
@@ -35,6 +41,9 @@ namespace reBass
          * average filter.
          */
         void adaptive_threshold(std::vector<double> &data);
+        void adaptive_threshold(std::vector<float> &data);
+
+        void normalize(std::vector<double> &data);
     };
 }
 

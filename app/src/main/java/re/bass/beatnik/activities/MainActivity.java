@@ -19,6 +19,7 @@ import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.BuildConfig;
 import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
+import re.bass.beatnik.audio.BTrack;
 import re.bass.beatnik.audio.BeatAnalyzer;
 import re.bass.beatnik.audio.DFProcessor;
 import re.bass.beatnik.audio.FFTProcessor;
@@ -39,6 +40,7 @@ public class MainActivity
     private AudioInput input;
     private BeatAnalyzer analyzer;
     private NativeDFProcessor processor;
+    private BTrack bTrack;
 
     @BindView(R.id.content_layout) RelativeLayout content;
     @BindView(R.id.bpm_number_text) TextView bpmNumberText;
@@ -88,6 +90,7 @@ public class MainActivity
         input = new Microphone(options);
         processor = new NativeDFProcessor(options);
         analyzer = new BeatAnalyzer(options);
+        bTrack = new BTrack(options);
 
         input.addListener(processor);
         processor.setFFTPlotBuffer(fftView.getPlotBuffer(), fftView.getPlotBuffer().capacity());
@@ -125,6 +128,15 @@ public class MainActivity
                     }
         });
         */
+
+
+        //processor.addOnDFProcessorOutputListener(bTrack);
+        bTrack.addOnNewBPMListener(new BTrack.OnNewBPMListener() {
+            @Override
+            public void onNewBPM(double bpm) {
+                Log.v(TAG, "New BPM: " + bpm);
+            }
+        });
 
         processor.addOnDFProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
