@@ -49,7 +49,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
     );
     private native void dealloc();
     private native void processAudio(
-            float[] buffer,
+            short[] buffer,
             double[] output
     );
     private native void getFrequencyData(
@@ -67,7 +67,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
     }
 
     @Override
-    public void onAudio(float[] buffer) {
+    public void onAudio(short[] buffer) {
         if (!initialized) {
             throw new RuntimeException("Not initialized yet.");
         }

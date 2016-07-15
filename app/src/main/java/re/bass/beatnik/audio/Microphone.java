@@ -40,9 +40,6 @@ public class Microphone implements AudioInput
 
             while (running && record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
                 record.read(shortBuffer, 0, shortBuffer.length);
-                for (int i = 0; i < shortBuffer.length; i++) {
-                    buffer[i] = ((float) shortBuffer[i]) / ((float) Short.MAX_VALUE);
-                }
                 notifyOnAudioListeners();
             }
             record.stop();
@@ -111,7 +108,7 @@ public class Microphone implements AudioInput
     private void notifyOnAudioListeners() {
         synchronized (this) {
             for (AudioListener listener : listeners) {
-                listener.onAudio(buffer);
+                listener.onAudio(shortBuffer);
             }
         }
     }

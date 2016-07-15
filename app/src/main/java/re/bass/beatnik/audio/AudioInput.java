@@ -15,7 +15,7 @@ public interface AudioInput extends Startable {
     int getFrameSize();
 
     interface AudioListener {
-        void onAudio(float[] buffer);
+        void onAudio(short[] buffer);
         void onStart();
     }
 }
