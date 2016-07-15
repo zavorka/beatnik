@@ -54,7 +54,7 @@ namespace reBass
         double getMaxValue(const vector<double> &df);
         int getMaxIndex(const vector<double> &df);
 
-        const float kInputTempo = 140.f;
+        const float kInputTempo = 150.f;
         const float kTightness = 4.f;
         const float kAlpha = .9f;
     };

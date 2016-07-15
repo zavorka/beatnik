@@ -29,7 +29,7 @@ namespace reBass
         df.push_back(df_value);
     }
 
-    vector<Beat>
+    vector<double>
     Beat_analyzer::get_beats()
     {
         size_t nonZeroCount = df.size();
@@ -41,7 +41,7 @@ namespace reBass
         }
 
         if (nonZeroCount <= 2) {
-            return vector<Beat>();
+            return vector<double>();
         }
 
         vector<double> df_vector {
@@ -56,32 +56,7 @@ namespace reBass
         vector<double> beats;
         tracker.calculateBeats(df_vector, beatPeriod, beats);
 
-        vector<Beat> returnBeats;
-
-        for (size_t i = 0; i < beats.size(); ++i)
-        {
-            size_t frame = (size_t) (beats[i] * step_size);
-            Beat beat;
-            beat.timestamp = RealTime::frame2RealTime(
-                    (int)frame,
-                    sample_rate
-            );
-
-            int frameIncrement = 0;
-
-            if (i + 1 < beats.size())
-            {
-                frameIncrement = (int) ((beats[i + 1] - beats[i]) * step_size);
-                if (frameIncrement > 0) {
-                    float bpm = (60.0f * sample_rate) / frameIncrement;
-                    beat.bpm = int(bpm * 100.0f + 0.5f) / 100.0f;
-                }
-            }
-
-            returnBeats.push_back(beat);
-        }
-
-        return returnBeats;
+        return beats;
     }
 
     float
@@ -90,16 +65,22 @@ namespace reBass
     }
 
     float
-    Beat_analyzer::get_bpm(const std::vector<Beat> &beats)
+    Beat_analyzer::get_bpm(const std::vector<double> &beats)
     {
         size_t size = beats.size();
         if (size < 4) {
             return NAN;
         }
 
-        RealTime timespan = (beats.back().timestamp - beats[2].timestamp);
-        float seconds = timespan.sec + timespan.nsec/1.0E9f;
-        float bpm = 60 * (size - 3) / seconds;
+        auto beats_count = size - 3;
+        auto frames_count = beats.back() - beats[2];
+
+        float bpm =
+                60.0f
+                * (float) sample_rate
+                / (float) step_size
+                / (float) frames_count
+                * (float) beats_count;
 
         while (bpm > 180.0) {
             bpm /= 2.0;

@@ -11,7 +11,6 @@ LOCAL_SRC_FILES += cpu-features.cpp
 
 LOCAL_SRC_FILES += external/kiss_fft/kiss_fft.c
 LOCAL_SRC_FILES += external/kiss_fft/kiss_fftr.c
-LOCAL_SRC_FILES += external/RealTime/RealTime.cpp
 
 LOCAL_SRC_FILES += beatnik/FFT_rolling.cpp
 LOCAL_SRC_FILES += tracker/Beat_analyzer.cpp

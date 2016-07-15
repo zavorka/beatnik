@@ -9,24 +9,17 @@
 #include <complex>
 #include <stddef.h>
 #include <boost/circular_buffer.hpp>
-#include "../external/RealTime/RealTime.hpp"
 
 #pragma GCC visibility push(default)
 
 namespace reBass {
 
-
-    struct Beat {
-        RealTime timestamp;
-        float bpm;
-    };
-
     class Beat_analyzer {
     public:
         Beat_analyzer(unsigned int inputSampleRate, size_t step_size, size_t window_size);
-        std::vector<Beat> get_beats();
+        std::vector<double> get_beats();
         float get_bpm();
-        float get_bpm(const std::vector<Beat>& beats);
+        float get_bpm(const std::vector<double>& periods);
         void enqueue_df_value(const double df_value);
         void clear_data();
     protected:

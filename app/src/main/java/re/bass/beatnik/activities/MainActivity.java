@@ -140,9 +140,6 @@ public class MainActivity
             public void run() {
                 if (BuildConfig.DEBUG) {
                     Log.v(TAG, "BPM calculated: " + String.valueOf(bpm));
-                    for (int i = 0; i < beats.length && beats[i] > 0.0; i++) {
-                        Log.v(TAG, i + ": " + beats[i]);
-                    }
                 }
                 if (Float.isNaN(bpm)) {
                     return;

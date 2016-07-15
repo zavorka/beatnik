@@ -85,20 +85,6 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_getBPMWithBeats(
     if (analyzer == nullptr) {
         return -1.f;
     }
-    auto beats = analyzer->get_beats();
-
-    jsize length = env->GetArrayLength(beatsArray);
-    auto output = env->GetFloatArrayElements(beatsArray, nullptr);
-
-    for (jsize i = 0; i < length; i++) {
-        if (i < beats.size()) {
-            output[i] = beats[i].bpm;
-        } else {
-            output[i] = 0.0f;
-        }
-    }
-
-    env->ReleaseFloatArrayElements(beatsArray, output, 0);
     return analyzer->get_bpm();
 }
 
