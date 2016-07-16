@@ -89,9 +89,11 @@ namespace reBass
             bpm *= 2.0;
         }
 
+        /*
         while (bpm < 120.0) {
             bpm *= 1.5;
         }
+        */
 
         return bpm;
     }

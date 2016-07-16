@@ -8,13 +8,13 @@ android {
         applicationId "re.bass.beatnik"
         minSdkVersion 19
         targetSdkVersion 24
-        versionCode 12
-        versionName "0.5.1"
+        versionCode 14
+        versionName "0.5.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
                 arguments "-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static"
-                abiFilters "armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+                abiFilters "armeabi", "armeabi-v7a", "arm64-v8a"
                 cppFlags "-std=c++11", "-frtti", "-fexceptions", "-Wall"
             }
         }
