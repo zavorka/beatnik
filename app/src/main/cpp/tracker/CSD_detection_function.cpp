@@ -10,33 +10,24 @@ namespace reBass
             unsigned int frameLength,
             unsigned int stepSize
     )
-        : frameLength(frameLength), stepSize(stepSize), data(frameLength)
+        : frameLength(frameLength),
+          stepSize(stepSize),
+          magnitude(frameLength),
+          previous_magnitude(frameLength),
+          peak_magnitude(frameLength)
     {
-        for (size_t i = 0; i < frameLength; i++) {
-            auto omega = i * PI * stepSize / (frameLength - 1);
-            data[i].phase = -omega;
-            data[i].unwrapped = -omega;
-        }
     }
 
     double
-    CSD_detection_function::process_frequency_domain(
-            const vector<complex<float>> &fft
+    CSD_detection_function::process_magnitudes(
+            const vector<float> &magnitudes
     ){
-        for (size_t i = 0; i < frameLength; i++) {
-            data[i].magnitude = std::abs(fft[i]);
-            double theta = std::arg(fft[i]);
-
-            double omega = (PI * stepSize * i) / (frameLength - 1);
-
-            double expected = data[i].phase + omega;
-            double error = math_utilities::princarg(theta - expected);
-
-            data[i].unwrapped = data[i].unwrapped + omega + error;
-            data[i].phase = theta;
-        }
+        std::copy(
+            magnitudes.cbegin(),
+            magnitudes.cend(),
+            this->magnitude.begin()
+        );
         //whiten();
-
         return broadband();
     }
 
@@ -44,40 +35,16 @@ namespace reBass
     CSD_detection_function::whiten()
     {
         for (unsigned int i = 0; i < frameLength; ++i) {
-            double m = data[i].magnitude;
-            if (m < data[i].magPeak) {
-                m = m + (data[i].magPeak - m) * kWhitenRelaxCoeff;
+            double m = magnitude[i];
+            if (m < peak_magnitude[i]) {
+                m = m + (peak_magnitude[i] - m) * kWhitenRelaxCoeff;
             }
             if (m < kWhitenFloor) {
                 m = kWhitenFloor;
             }
-            data[i].magPeak = m;
-            data[i].magnitude /= m;
+            peak_magnitude[i] = m;
+            magnitude[i] /= m;
         }
-    }
-
-
-    double
-    CSD_detection_function::complex_spectral_difference()
-    {
-        double val = 0;
-
-        for (unsigned int i = 0; i < frameLength; i++) {
-    	    double phase = (
-                    data[i].magnitude
-                    - 2 * data[i].phaseHistory
-                    + data[i].phaseHistoryOld
-            );
-    	    double dev = math_utilities::princarg(phase);
-
-            val += std::abs(data[i].magHistory - std::polar(data[i].magnitude, dev));
-
-    	    data[i].phaseHistoryOld = data[i].phaseHistory;
-    	    data[i].phaseHistory = data[i].phase;
-    	    data[i].magHistory = data[i].magnitude;
-        }
-
-        return val;
     }
 
     double
@@ -86,14 +53,14 @@ namespace reBass
         double val = 0;
 
         for (unsigned int i = 0; i < frameLength; i++) {
-            double squared_magnitude = data[i].magnitude * data[i].magnitude;
-            if (data[i].magHistory > 0.0) {
-                double diff = 10.0 * log10(squared_magnitude / data[i].magHistory);
+            double squared_magnitude = magnitude[i] * magnitude[i];
+            if (previous_magnitude[i] > 0.0) {
+                double diff = 10.0 * log10(squared_magnitude / previous_magnitude[i]);
                 if (diff > DB_RISE) {
                     val = val + 1.0;
                 }
             }
-            data[i].magHistory = squared_magnitude;
+            previous_magnitude[i] = squared_magnitude;
         }
 
         return val;

@@ -13,38 +13,23 @@ namespace reBass
     public:
         CSD_detection_function(unsigned int frameLength, unsigned int stepSize);
 
-        /**
-         * Process a single frequency-domain frame, provided as
-         * frameLength/2+1 real and imaginary component values.
-         */
-        double process_frequency_domain(
-                const std::vector<std::complex<float>>& fft
+        double process_magnitudes(
+                const std::vector<float>& magnitudes
         );
 
         constexpr static double DF_OUTPUT_VALUE_MULTIPLIER = 512;
         constexpr static double DB_RISE = 3.0;
     private:
-        struct DFData
-        {
-            double magHistory = 0.0;
-            double phaseHistory = 0.0;
-            double phaseHistoryOld = 0.0;
-            double magPeak = 0.0;
-
-            double magnitude = 0.0;
-            double phase;
-            double unwrapped;
-
-            DFData(double omega = 0): phase(-omega), unwrapped(-omega) { }
-        };
-
         void whiten();
-        double complex_spectral_difference();
         double broadband();
 
         unsigned int frameLength;
         unsigned int stepSize;
-        std::vector<DFData> data;
+
+        std::vector<float> magnitude;
+        std::vector<float> previous_magnitude;
+        std::vector<float> peak_magnitude;
+
         static constexpr float kWhitenRelaxCoeff = 0.9997;
         static constexpr float kWhitenFloor = 0.01;
 
