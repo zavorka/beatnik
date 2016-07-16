@@ -240,25 +240,28 @@ namespace reBass
             int prangeMin = (int) (-2 * beatPeriod[i]);
             int prangeMax = (int) round(-0.5 * beatPeriod[i]);
 
+            int rangeLength = prangeMax - prangeMin + 1;
             // transition range
-            vector<double> scorecands (prangeMax - prangeMin + 1);
+            double max_score = 0.0;
+            int max_index = -1;
 
-            for (unsigned int j = 0; j < scorecands.size(); j++)
+            for (unsigned int j = 0; j < rangeLength; j++)
             {
                 double mu = static_cast<double> (beatPeriod[i]);
-                double txwt = exp(-0.5 * pow(TIGHTNESS * log((round(2 * mu) - j) / mu), 2));
+                double txwt = exp(-0.5 * pow(TIGHTNESS * log(2. - (j / mu)), 2));
 
                 int cscore_ind = i + prangeMin + j;
                 if (cscore_ind >= 0) {
-                    scorecands[j] = txwt * cumulative_score[cscore_ind];
+                    double score = txwt * cumulative_score[cscore_ind];
+                    if (score > max_score) {
+                        max_score = score;
+                        max_index = j;
+                    }
                 }
             }
 
-            double vv = getMaxValue(scorecands);
-            int xx = getMaxIndex(scorecands);
-
-            cumulative_score[i] = ALPHA * vv + (1. - ALPHA) * local_score[i];
-            backlink[i] = i + prangeMin + xx;
+            cumulative_score[i] = ALPHA * max_score + (1. - ALPHA) * local_score[i];
+            backlink[i] = i + prangeMin + max_index;
         }
 
         // pick a strong point in cumscore vector
