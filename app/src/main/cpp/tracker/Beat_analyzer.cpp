@@ -4,7 +4,7 @@
 
 #include <math.h>
 #include "Beat_analyzer.hpp"
-#include "Tracker.hpp"
+#include "../log.h"
 
 using std::vector;
 using std::complex;
@@ -13,14 +13,17 @@ namespace reBass
 {
     Beat_analyzer::Beat_analyzer(
             unsigned int sample_rate,
-            size_t step_size,
-            size_t window_size
+            unsigned int step_size
     )
             : sample_rate(sample_rate),
               step_size(step_size),
-              window_size(window_size),
-              df(MAX_BAR_DURATION_IN_SAMPLES / step_size)
+              df_length(MAX_BAR_DURATION_IN_SAMPLES / step_size),
+              df(df_length),
+              df_copy(df_length),
+              beat_period(df_length),
+              tracker(step_size, sample_rate, df_length)
     {
+        df.insert(df.begin(), df.capacity(), 0.0);
     }
 
     void
@@ -32,31 +35,10 @@ namespace reBass
     vector<double>
     Beat_analyzer::get_beats()
     {
-        size_t nonZeroCount = df.size();
-        while (nonZeroCount > 0) {
-            if (df[nonZeroCount - 1] > 0.0) {
-                break;
-            }
-            --nonZeroCount;
-        }
-
-        if (nonZeroCount <= 2) {
-            return vector<double>();
-        }
-
-        vector<double> df_vector {
-                df.begin() + 2,
-                df.begin() + nonZeroCount
-        };
-        vector<double> beatPeriod(nonZeroCount - 2);
-
-        Tracker tracker(step_size, sample_rate);
-        tracker.calculateBeatPeriod(df_vector, beatPeriod);
-
-        vector<double> beats;
-        tracker.calculateBeats(df_vector, beatPeriod, beats);
-
-        return beats;
+        std::copy(df.begin(), df.end(), df_copy.begin());
+        tracker.calculateBeatPeriod(df_copy, beat_period);
+        LOGI("beats period: %lf", beat_period.back());
+        return tracker.calculateBeats(df_copy, beat_period);
     }
 
     float
@@ -65,9 +47,11 @@ namespace reBass
     }
 
     float
-    Beat_analyzer::get_bpm(const std::vector<double> &beats)
+    Beat_analyzer::get_bpm(const std::vector<double> beats)
     {
-        size_t size = beats.size();
+        auto size = beats.size();
+        LOGI("beats size: %d", size);
+
         if (size < 4) {
             return NAN;
         }

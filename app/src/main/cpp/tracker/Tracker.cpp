@@ -4,105 +4,102 @@
 
 #include "math_utilities.hpp"
 #include "Tracker.hpp"
+#include "../log.h"
 
 #define   EPS 0.0000008 // just some arbitrary small number
 
+using std::exp;
+using std::pow;
+using std::vector;
+
 namespace reBass
 {
-    Tracker::Tracker(size_t increment, unsigned int sample_rate)
-            : mIncrement(increment),
-              sample_rate(sample_rate)
+    Tracker::Tracker(
+            unsigned int step_size,
+            unsigned int sample_rate,
+            unsigned int df_length
+    )
+            : step_size(step_size),
+              sample_rate(sample_rate),
+              df_length(df_length),
+              step_rate((float) sample_rate / (float) step_size),
+              ray_param((60. / INPUT_TEMPO) * step_rate),
+              weight_vector(RCF_LENGTH),
+              rcf_matrix ((df_length - DF_WINDOW) / DF_STEP,
+                          vector<double>(RCF_LENGTH)),
+              df_frame(DF_WINDOW),
+              acf_frame(DF_WINDOW),
+              transition_matrix(RCF_LENGTH, vector<double>(RCF_LENGTH)),
+              delta(RCF_LENGTH, vector<double>(RCF_LENGTH)),
+              psi(RCF_LENGTH, vector<int>(RCF_LENGTH)),
+              best_path(RCF_LENGTH),
+              cumulative_score(df_length),
+              backlink(df_length),
+              local_score(df_length)
     {
-    }
-
-    void Tracker::calculateBeatPeriod(const vector<double> &df, vector<double> &beatPeriod)
-    {
-        // split into 512 sample frames with a 128 hop size
-        // calculate the acf,
-        // then the rcf..
-        // then call viterbi decoding with weight vector and transition matrix
-        // and get best path
-
-        unsigned int wvLen = 128;
-
-        // note: 60*44100/512 is a magic number
-        // this might (will?) break if a user specifies a different frame rate for the onset detection function
-        double rayparam = (60.0 * sample_rate / mIncrement) / kInputTempo;
-
-        // make rayleigh weighting curve
-        vector<double> wv(wvLen);
-
-        for (unsigned int i = 0; i < wv.size(); i++)
-        {
-            // standard rayleigh weighting over periodicities
-            wv[i] = (double(i) / pow(rayparam, 2.)) * exp((-1. * pow(-double(i), 2.)) / (2. * pow(rayparam, 2.)));
+        // calculate the vector for Rayleigh wighting over periodicities
+        double ray_param_sqr = pow(ray_param, 2);
+        for (auto i = 0.; i < RCF_LENGTH; i++) {
+            weight_vector.at((unsigned long) i)
+                    = i / ray_param_sqr
+                      * exp(-1. * pow(i, 2) / (2. * ray_param_sqr));
         }
 
-        // beat tracking frame size (roughly 6 seconds) and hop (1.5 seconds)
-        unsigned int winLen = 512;
-        unsigned int step = 128;
+        // don't want really short beat periods, or really long ones
+        for (auto i = 20; i < RCF_LENGTH - 20; i++) {
+            for (auto j = 20; j < RCF_LENGTH - 20; j++) {
+                transition_matrix[i][j] =
+                        exp((-1. * (j - i) * (j - i)) / (2. * pow(SIGMA, 2.)));
+            }
+        }
+        LOGI("Tracker Passed init");
+    }
 
-        // matrix to store output of comb filter bank, increment column of matrix at each frame
-        vector<vector<double>> rcfMatrix;
-        int colCounter = -1;
-
+    void
+    Tracker::calculateBeatPeriod(
+            const vector<double> &df,
+            vector<double> &beat_periods
+    ) {
         // main loop for beat period calculation
-        for (unsigned int i = 0; i + winLen < df.size(); i += step)
+        for (unsigned int i = 0; i + DF_WINDOW < df_length; i += DF_STEP)
         {
             // get dfFrame
-            vector<double> dfFrame(winLen);
-            for (unsigned int k = 0; k < winLen; k++)
-            {
-                dfFrame[k] = df[i+k];
-            }
+            std::copy(df.cbegin() + i, df.cbegin() + i + DF_WINDOW, df_frame.begin());
             // get rcf vector for current frame
-            vector<double> rcf(wvLen);
-            getRcf(dfFrame, wv, rcf);
-
-            rcfMatrix.push_back(vector<double>()); // adds a new column
-            colCounter++;
-            for (unsigned int j = 0; j < rcf.size(); j++) {
-                rcfMatrix[colCounter].push_back(rcf[j]);
-            }
+            getRcf(rcf_matrix[i / DF_STEP]);
         }
 
         // now call viterbi decoding function
-        viterbiDecode(rcfMatrix, wv, beatPeriod);
+        viterbiDecode(rcf_matrix, weight_vector, beat_periods);
     }
 
 
-    void Tracker::getRcf(const vector<double> &dfFrameIn, const vector<double> &wv, vector<double> &rcf)
-    {
-        // calculate autocorrelation function
+    void
+    Tracker::getRcf(
+            vector<double> &rcf
+    ) {
+        // calculate auto-correlation function
         // then rcf
         // just hard code for now... don't really need separate functions to do this
 
-        vector<double> dfFrame(dfFrameIn);
-        math_utilities::adaptive_threshold(dfFrame);
-        vector<double> acf(dfFrame.size());
+        math_utilities::adaptive_threshold(df_frame);
 
-        for (unsigned int lag = 0; lag < dfFrame.size(); lag++)
-        {
+        for (unsigned int lag = 0; lag < DF_WINDOW; lag++) {
             double sum = 0.;
-            double tmp;
-
-            for (unsigned int n=0; n < (dfFrame.size() - lag); n++) {
-                tmp = dfFrame[n] * dfFrame[n+lag];
-                sum += tmp;
+            for (unsigned int n = 0; n < (DF_WINDOW - lag); n++) {
+                sum += df_frame[n] * df_frame[n + lag];
             }
-            acf[lag] = sum / (dfFrame.size() - lag);
+            acf_frame[lag] = sum / (DF_WINDOW - lag);
         }
 
         // now apply comb filtering
-        int numelem = 4;
-
-        for (unsigned int i = 2; i < rcf.size(); i++) // max beat period
-        {
-            for (int a = 1; a <= numelem; a++) // number of comb elements
-            {
-                for (int b = 1 - a; b <= a - 1; b++) // general state using normalisation of comb elements
-                {
-                    rcf[i - 1] += (acf[(a * i + b) - 1] * wv[i - 1]) / (2. * a - 1.);	// calculate value for comb filter row
+        for (auto i = 2; i < RCF_LENGTH; i++) { // max beat period
+            for (auto a = 1; a <= COMB_SIZE; a++) {
+                // general state using normalisation of comb elements
+                for (auto b = 1 - a; b <= a - 1; b++) {
+                    // calculate value for comb filter row
+                    rcf[i - 1] += (acf_frame[(a * i + b) - 1]
+                                   * weight_vector[i - 1]) / (2. * a - 1.);
                 }
             }
         }
@@ -111,13 +108,13 @@ namespace reBass
         math_utilities::adaptive_threshold(rcf);
 
         double rcfsum = 0.;
-        for (unsigned int i = 0; i < rcf.size(); i++) {
+        for (auto i = 0; i < RCF_LENGTH; i++) {
             rcf[i] += EPS ;
             rcfsum += rcf[i];
         }
 
         // normalise rcf to sum to unity
-        for (unsigned int i=0; i < rcf.size(); i++) {
+        for (auto i = 0; i < RCF_LENGTH; i++) {
             rcf[i] /= (rcfsum + EPS);
         }
     }
@@ -130,115 +127,86 @@ namespace reBass
         // following Kevin Murphy's Viterbi decoding to get best path of
         // beat periods through rfcmat
 
-        // make transition matrix
-        vector<vector<double>> tmat;
-        for (unsigned int i = 0; i < wv.size(); i++) {
-            tmat.push_back (vector<double>()); // adds a new column
-            for (unsigned int j = 0; j < wv.size(); j++) {
-                tmat[i].push_back(0.); // fill with zeros initially
-            }
-        }
 
-        // variance of Gaussians in transition matrix
-        // formed of Gaussians on diagonal - implies slow tempo change
-        double sigma = 8.;
-        // don't want really short beat periods, or really long ones
-        for (unsigned int i = 20; i < wv.size() - 20; i++) {
-            for (unsigned int j = 20; j < wv.size() - 20; j++) {
-                double mu = double(i);
-                tmat[i][j] = exp((-1. * pow((j - mu), 2.)) / (2. * pow(sigma, 2.)));
-            }
-        }
-
-        // parameters for Viterbi decoding
-        vector<vector<double>> delta;
-        vector<vector<int>> psi;
-        for (unsigned int i = 0;i <rcfmat.size(); i++)
-        {
-            delta.push_back(vector<double>());
-            psi.push_back(vector<int>());
-            for (unsigned int j = 0; j < rcfmat[i].size(); j++) {
-                delta[i].push_back(0.); // fill with zeros initially
-                psi[i].push_back(0); // fill with zeros initially
+        for (auto i = 0;i < RCF_LENGTH; i++) {
+            for (auto j = 0; j < RCF_LENGTH; j++) {
+                delta[i][j] = 0.;
+                psi[i][j] = 0;
             }
         }
 
 
-        unsigned long T = delta.size();
-
-        if (T < 2) {
-            return; // can't do anything at all meaningful
-        }
-
-        unsigned long Q = delta[0].size();
+        auto T = rcfmat.size();
+        auto Q = RCF_LENGTH;
 
         // initialize first column of delta
-        for (unsigned long j = 0; j < Q; j++)
+        for (auto j = 0; j < Q; j++)
         {
-            delta[0][j] = wv[j] * rcfmat[0][j];
+            delta[0][j] = weight_vector[j] * rcfmat[0][j];
             psi[0][j] = 0;
         }
 
-        double deltaSum = std::accumulate(delta[0].begin(), delta[0].end(), 0.0);
+        auto deltaSum = std::accumulate(delta[0].cbegin(), delta[0].cend(), 0.0);
 
-        for (unsigned long i = 0; i < Q; i++) {
+        for (auto i = 0; i < Q; i++) {
             delta[0][i] /= (deltaSum + EPS);
         }
 
 
-        for (unsigned long t = 1; t < T; t++)
-        {
-            vector<double> tmpVec(Q);
-
-            for (unsigned long j = 0; j < Q; j++)
-            {
-                for (unsigned long i = 0; i < Q; i++) {
-                    tmpVec[i] = delta[t-1][i] * tmat[j][i];
+        for (unsigned long t = 1; t < T; t++) {
+            for (auto j = 0; j < Q; j++) {
+                auto max_value = delta[t-1][0] * transition_matrix[j][0];
+                auto max_index = 0;
+                for (auto i = 0; i < Q; i++) {
+                    auto value = delta[t-1][i] * transition_matrix[j][i];
+                    if (value > max_value) {
+                        max_value = value;
+                        max_index = i;
+                    }
                 }
 
-                delta[t][j] = getMaxValue(tmpVec);
-                psi[t][j] = getMaxIndex(tmpVec);
+                delta[t][j] = max_value;
+                psi[t][j] = max_index;
                 delta[t][j] *= rcfmat[t][j];
             }
 
             // normalise current delta column
             deltaSum = std::accumulate(delta[t].begin(), delta[t].begin() + Q, 0.0);
-
-            for (unsigned int i=0; i<Q; i++) {
+            for (auto i = 0; i < Q; i++) {
                 delta[t][i] /= (deltaSum + EPS);
             }
         }
 
-        vector<int> bestpath(T);
-        vector<double> tmpVec(Q);
-        for (unsigned int i = 0; i < Q; i++) {
-            tmpVec[i] = delta[T-1][i];
-        }
-
         // find starting point - best beat period for "last" frame
-        bestpath[T-1] = getMaxIndex(tmpVec);
+        auto max_value = delta[T - 1][0];
+        auto max_index = 0;
+        for (auto i = 0; i < Q; i++) {
+            if (delta[T - 1][i] > max_value) {
+                max_value = delta[T - 1][i];
+                max_index = i;
+            }
+        }
+        best_path[T - 1] = max_index;
 
         // backtrace through index of maximum values in psi
-        for (unsigned long t = T - 2; t > 0; t--) {
-            bestpath[t] = psi[t + 1][bestpath[t + 1]];
+        for (auto t = T - 2; t > 0; t--) {
+            best_path[t] = psi[t + 1][best_path[t + 1]];
         }
 
         // weird but necessary hack -- couldn't get above loop to terminate at t >= 0
-        bestpath[0] = psi[1][bestpath[1]];
-
-        unsigned int lastind = 0;
-        for (unsigned int i = 0; i < T; i++)
+        best_path[0] = psi[1][best_path[1]];
+        unsigned int last_index = 0;
+        for (auto i = 0; i < T; i++)
         {
-            unsigned int step = 128;
-            for (unsigned int j = 0; j < step; j++)
+            for (unsigned int j = 0; j < DF_STEP; j++)
             {
-                lastind = i * step + j;
-                beatPeriod[lastind] = bestpath[i];
+                last_index = i * DF_STEP + j;
+                beatPeriod[last_index] = best_path[i];
             }
         }
 
-        for (unsigned int i = lastind; i < beatPeriod.size(); i++) {
-            beatPeriod[i] = beatPeriod[lastind];
+        for (auto i = last_index; i < beatPeriod.size(); i++) {
+            beatPeriod[i] = beatPeriod[last_index];
         }
     }
 
@@ -252,65 +220,60 @@ namespace reBass
         return (int) (std::max_element(df.begin(), df.end()) - df.begin());
     }
 
-    void Tracker::calculateBeats(
+    vector<double>
+    Tracker::calculateBeats(
             const vector<double> &df,
-            const vector<double> &beatPeriod,
-            vector<double> &beats
+            const vector<double> &beatPeriod
     ) {
-        if (df.empty() || beatPeriod.empty()) return;
+        vector<double> beats;
 
-        vector<double> cumscore(df.size()); // store cumulative score
-        vector<int> backlink(df.size()); // backlink (stores best beat locations at each time instant)
-        vector<double> localscore(df.size()); // localscore, for now this is the same as the detection function
+        if (df.size() != df_length) return beats;
 
-        for (unsigned int i = 0; i < df.size(); i++)
-        {
-            localscore[i] = df[i];
+        std::copy(df.cbegin(), df.cend(), local_score.begin());
+        for (auto i = 0; i < df_length; i++) {
             backlink[i] = -1;
         }
 
-
         // main loop
-        for (unsigned int i = 0; i < localscore.size(); i++)
+        for (auto i = 0; i < df_length; i++)
         {
             int prangeMin = (int) (-2 * beatPeriod[i]);
             int prangeMax = (int) round(-0.5 * beatPeriod[i]);
 
             // transition range
-            vector<double> txwt (prangeMax - prangeMin + 1);
-            vector<double> scorecands (txwt.size());
+            vector<double> scorecands (prangeMax - prangeMin + 1);
 
-            for (unsigned int j = 0; j < txwt.size(); j++)
+            for (unsigned int j = 0; j < scorecands.size(); j++)
             {
                 double mu = static_cast<double> (beatPeriod[i]);
-                txwt[j] = exp(-0.5 * pow(kTightness * log((round(2 * mu) - j) / mu), 2));
+                double txwt = exp(-0.5 * pow(TIGHTNESS * log((round(2 * mu) - j) / mu), 2));
 
                 int cscore_ind = i + prangeMin + j;
                 if (cscore_ind >= 0) {
-                    scorecands[j] = txwt[j] * cumscore[cscore_ind];
+                    scorecands[j] = txwt * cumulative_score[cscore_ind];
                 }
             }
 
             double vv = getMaxValue(scorecands);
             int xx = getMaxIndex(scorecands);
 
-            cumscore[i] = kAlpha * vv + (1. - kAlpha) * localscore[i];
+            cumulative_score[i] = ALPHA * vv + (1. - ALPHA) * local_score[i];
             backlink[i] = i + prangeMin + xx;
         }
 
         // pick a strong point in cumscore vector
-        vector<double> tmpVec;
-        for (auto i = cumscore.size() - beatPeriod[beatPeriod.size()-1] ; i < cumscore.size(); i++) {
-            tmpVec.push_back(cumscore[i]);
+        auto period = (unsigned int) beatPeriod[beatPeriod.size()-1];
+        auto max_score = cumulative_score[df_length - period];
+        auto max_index = 0;
+        for (auto i = df_length -  period; i < df_length; i++) {
+            if(cumulative_score[i] > max_score) {
+                max_score = cumulative_score[i];
+                max_index = i;
+            }
         }
 
-        auto startpoint = getMaxIndex(tmpVec) + cumscore.size() - beatPeriod[beatPeriod.size()-1] ;
-
-        // can happen if no results obtained earlier (e.g. input too short)
-        if (startpoint >= (int)backlink.size()) startpoint = (int)(backlink.size()-1);
-
         vector<int> ibeats;
-        ibeats.push_back((int) startpoint);
+        ibeats.push_back(max_index);
         while (backlink[ibeats.back()] > 0)
         {
             int b = ibeats.back();
@@ -318,8 +281,10 @@ namespace reBass
             ibeats.push_back(backlink[b]);
         }
 
-        for (unsigned int i = 0; i < ibeats.size(); i++) {
+        for (auto i = 0; i < ibeats.size(); i++) {
             beats.push_back((double) ibeats[ibeats.size() - i - 1]);
         }
+
+        return beats;
     }
 }

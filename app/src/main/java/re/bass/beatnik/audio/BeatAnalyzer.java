@@ -39,8 +39,7 @@ public class BeatAnalyzer
         tempBuffer.clear();
         init(
                 options.getSampleRate(),
-                options.getStepSize(),
-                options.getWindowSize()
+                options.getStepSize()
         );
 
         beatsBuffer = new float[BEATS_BUFFER_SIZE];
@@ -49,8 +48,7 @@ public class BeatAnalyzer
 
     private native void init(
             int sampleRate,
-            int stepSize,
-            int blockSize
+            int stepSize
     );
     private native void enqueueDFValue(double dfValue);
     private native void enqueueDFValues(double[] values);
@@ -97,7 +95,7 @@ public class BeatAnalyzer
                     latch = null;
                 }
             }
-        }, 5000, 5000); // TODO fixme!
+        }, 6000, 3000); // TODO fixme!
     }
     
     public void stop() {

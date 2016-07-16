@@ -21,8 +21,7 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_init(
 ) {
     analyzer = new reBass::Beat_analyzer(
             (unsigned int) sampleRate,
-            (size_t) stepSize,
-            (size_t) windowSize
+            (unsigned int) stepSize
     );
 }
 
@@ -60,6 +59,7 @@ Java_re_bass_beatnik_audio_BeatAnalyzer_enqueueDFValues(
 
     env->ReleaseDoubleArrayElements(valuesArray, values, JNI_ABORT);
 }
+
 
 extern "C"
 float
