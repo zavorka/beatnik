@@ -10,3 +10,4 @@
 /captures
 app/externalNativeBuild
 *.apk
+app/src/main/cpp/.idea

@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.6.0)
 
+if (NOT DEFINED ANDROID_NDK)
+    set(ANDROID_NDK /Users/curly/Library/Android/sdk/ndk-bundle)
+endif()
+
 ##########################################################
 # build cpufeatures as a static lib
 include_directories(./ndk_helper
