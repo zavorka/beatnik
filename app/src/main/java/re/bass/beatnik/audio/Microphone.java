@@ -48,7 +48,7 @@ public class Microphone implements AudioInput
     }
 
     private final static String TAG = "Microphone";
-    private static final int MIN_BUFFER_SIZE = 2048;
+    private static final int MIN_BUFFER_SIZE = 1024;
 
     private int sampleRate;
     private int stepSize;

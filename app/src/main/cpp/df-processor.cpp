@@ -1,6 +1,8 @@
 #include <jni.h>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <boost/circular_buffer.hpp>
 
 #include "beatnik/FFT_rolling.hpp"
 #include "tracker/CSD_detection_function.hpp"
@@ -12,6 +14,12 @@ static reBass::CSD_detection_function* detection_function;
 
 static std::vector<float>* input_buffer;
 static std::vector<short>* short_buffer;
+
+static boost::circular_buffer<float>* df_plot_circular_buffer;
+static float* df_plot_buffer;
+
+static float* fft_plot_buffer;
+static unsigned int fft_plot_buffer_length;
 
 extern "C"
 void
@@ -47,8 +55,13 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_dealloc(
         delete input_buffer;
     }
     if (short_buffer != nullptr) {
-        delete input_buffer;
+        delete short_buffer;
     }
+    if (df_plot_circular_buffer != nullptr) {
+        delete df_plot_circular_buffer;
+    }
+    df_plot_buffer = nullptr;
+    fft_plot_buffer = nullptr;
 }
 
 
@@ -63,6 +76,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
     auto windows_count = env->GetArrayLength(outputArray);
     auto step_size = input_buffer->size();
     auto output = env->GetDoubleArrayElements(outputArray, nullptr);
+    float average = 0.0f;
 
     for (unsigned short i = 0; i < windows_count; i++) {
         env->GetShortArrayRegion(
@@ -82,13 +96,39 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
                 }
         );
 
-        auto fft_buffer = fft->compute_fft(*input_buffer);
-        output[i] = detection_function->process_frequency_domain(fft_buffer);
+        fft->compute_fft(*input_buffer);
+        auto magnitudes = fft->calculate_magnitudes();
+
+        output[i] = detection_function->process_magnitudes(magnitudes);
 
         output[i] /= reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
+        average += (float) output[i] / windows_count * 2;
     }
 
     env->ReleaseDoubleArrayElements(outputArray, output, 0);
+
+    if (df_plot_circular_buffer != nullptr
+            || df_plot_buffer != nullptr) {
+        df_plot_circular_buffer->push_back(average);
+        std::copy(
+            df_plot_circular_buffer->begin(),
+            df_plot_circular_buffer->end(),
+            df_plot_buffer
+        );
+    }
+    if (fft_plot_buffer != nullptr) {
+        auto magnitudes = fft->calculate_magnitudes();
+        auto length = fft_plot_buffer_length;
+        if (magnitudes.size() < length) {
+            length = (unsigned int) magnitudes.size();
+        }
+
+        std::copy(
+            magnitudes.cbegin(),
+            magnitudes.cbegin() + length,
+            fft_plot_buffer
+        );
+    }
 }
 
 extern "C"
@@ -105,6 +145,35 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_calculateMagnitudes(
             magnitudes.size(),
             magnitudes.data()
     );
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_setDFPlotBuffer(
+        JNIEnv* env,
+        jobject object, /* this */
+        jobject bufferObject,
+        jint length
+) {
+    df_plot_buffer = reinterpret_cast<float*>(env->GetDirectBufferAddress(bufferObject));
+    df_plot_circular_buffer = new boost::circular_buffer<float>((unsigned int) length);
+    df_plot_circular_buffer->insert(
+            df_plot_circular_buffer->begin(),
+            df_plot_circular_buffer->capacity(),
+            0.0f
+    );
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_setFFTPlotBuffer(
+        JNIEnv* env,
+        jobject object, /* this */
+        jobject bufferObject,
+        jint length
+) {
+    fft_plot_buffer = reinterpret_cast<float*>(env->GetDirectBufferAddress(bufferObject));
+    fft_plot_buffer_length = (unsigned int) length;
 }
 
 extern "C"

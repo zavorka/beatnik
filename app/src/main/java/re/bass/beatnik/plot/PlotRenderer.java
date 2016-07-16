@@ -93,6 +93,10 @@ public class PlotRenderer implements GLSurfaceView.Renderer
         GLES20.glLinkProgram(program);
     }
 
+    public FloatBuffer getPlotBuffer() {
+        return yBuffer;
+    }
+
     private void initXBuffer() {
         for (int i = 0; i < pointsCount; i++) {
             xBuffer.put((float) i / (float) (pointsCount - 1));
@@ -151,7 +155,7 @@ public class PlotRenderer implements GLSurfaceView.Renderer
 
         GLES20.glLineWidth(5.0f);
 
-        synchronized (yBuffer) {
+        synchronized (this) {
             GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, pointsCount);
         }
 
@@ -159,7 +163,7 @@ public class PlotRenderer implements GLSurfaceView.Renderer
         GLES20.glDisableVertexAttribArray(yHandle);
     }
 
-    public static int loadShader(ShaderType type, String code) {
+    private static int loadShader(ShaderType type, String code) {
         int typeValue = 0;
         switch (type) {
             case VERTEX_SHADER:

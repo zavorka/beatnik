@@ -2,6 +2,7 @@ package re.bass.beatnik.audio;
 
 import android.util.Log;
 
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,6 +60,9 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
             float[] buffer
     );
 
+    public native void setDFPlotBuffer(FloatBuffer buffer, int length);
+    public native void setFFTPlotBuffer(FloatBuffer buffer, int length);
+
     @Override
     public void onStart() {
         init(sampleRate, stepSize, windowSize);
@@ -91,7 +95,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
     private void notifyOutputListeners() {
         synchronized (outputListeners) {
             for (OnProcessorOutputListener listener : outputListeners) {
-                listener.onProcessorOutput(dfOutput);
+                listener.onProcessorOutput(this, dfOutput);
             }
         }
     }

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 
+import java.nio.FloatBuffer;
+
 import re.bass.beatnik.utils.MultisampleConfigChooser;
 
 /**
@@ -13,7 +15,7 @@ import re.bass.beatnik.utils.MultisampleConfigChooser;
 public class GLPlotView extends GLSurfaceView
 {
     protected static final int MAX_POINTS = 256;
-    private final PlotRenderer renderer;
+    protected final PlotRenderer renderer;
 
     public GLPlotView(Context context) {
         this(context, null);
@@ -33,10 +35,10 @@ public class GLPlotView extends GLSurfaceView
 
     public void updateWithValues(final float[] values) {
         renderer.setPoints(values);
-        dataChanged();
+        requestRender();
     }
 
-    protected final void dataChanged() {
-        requestRender();
+    public FloatBuffer getPlotBuffer() {
+        return renderer.getPlotBuffer();
     }
 }

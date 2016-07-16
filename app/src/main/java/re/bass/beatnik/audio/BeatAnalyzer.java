@@ -61,6 +61,7 @@ public class BeatAnalyzer
 
     @Override
     public void onProcessorOutput(
+            DFProcessor sender,
             double[] output
     ) {
         synchronized (this) {

@@ -24,8 +24,7 @@ import re.bass.beatnik.audio.DFProcessor;
 import re.bass.beatnik.audio.FFTProcessor;
 import re.bass.beatnik.audio.Microphone;
 import re.bass.beatnik.audio.NativeDFProcessor;
-import re.bass.beatnik.plot.FFTGLPlotView;
-import re.bass.beatnik.plot.RollingGLPlotView;
+import re.bass.beatnik.plot.GLPlotView;
 import re.bass.beatnik.utils.CPUFeatures;
 
 public class MainActivity
@@ -46,8 +45,8 @@ public class MainActivity
     @BindView(R.id.bpm_number_text) TextView bpmNumberText;
 	@BindView(R.id.bpm_unit_text) TextView bpmUnitText;
     @BindView(R.id.fuck_off_text) TextView fuckOffText;
-    @BindView(R.id.df_view) RollingGLPlotView dfView;
-    @BindView(R.id.fft_view) FFTGLPlotView fftView;
+    @BindView(R.id.df_view) GLPlotView dfView;
+    @BindView(R.id.fft_view) GLPlotView fftView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +92,21 @@ public class MainActivity
         analyzer = new BeatAnalyzer(options);
 
         input.addListener(processor);
+        processor.setFFTPlotBuffer(fftView.getPlotBuffer(), fftView.getPlotBuffer().capacity());
+        processor.addOnNewFFTDataListener(new FFTProcessor.OnNewFFTDataListener() {
+            @Override
+            public void onNewFFTData(FFTProcessor sender) {
+                fftView.requestRender();
+            }
+        });
+        processor.setDFPlotBuffer(dfView.getPlotBuffer(), dfView.getPlotBuffer().capacity());
+        processor.addOnDFProcessorOutputListener(new DFProcessor.OnProcessorOutputListener() {
+            @Override
+            public void onProcessorOutput(DFProcessor sender, double[] output) {
+                dfView.requestRender();
+            }
+        });
+        /*
         processor.addOnNewFFTDataListener(
                 new FFTProcessor.OnNewFFTDataListener() {
                     @Override
@@ -112,6 +126,7 @@ public class MainActivity
                         dfView.appendArray(output);
                     }
         });
+        */
 
         processor.addOnDFProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
