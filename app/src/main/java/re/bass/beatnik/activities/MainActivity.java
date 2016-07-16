@@ -149,7 +149,7 @@ public class MainActivity
     }
 
     @Override
-    public void onBPMCalculated(final float bpm, final float[] beats) {
+    public void onBPMCalculated(final float bpm) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {

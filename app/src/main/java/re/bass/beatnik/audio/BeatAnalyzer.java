@@ -2,6 +2,7 @@ package re.bass.beatnik.audio;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -88,7 +89,7 @@ public class BeatAnalyzer
                 synchronized (this) {
                     ongoingAnalysis = true;
                 }
-                float bpm = getBPMWithBeats(beatsBuffer);
+                float bpm = getBPM();
                 notifyBPMCalculated(bpm);
                 synchronized (this) {
                     ongoingAnalysis = false;
@@ -124,7 +125,7 @@ public class BeatAnalyzer
     }
 
     public interface OnBPMCalculatedListener {
-        void onBPMCalculated(float bpm, final float[] beats);
+        void onBPMCalculated(float bpm);
     }
 
     public void addOnBPMCalculatedListener(OnBPMCalculatedListener listener) {
@@ -142,7 +143,7 @@ public class BeatAnalyzer
     private void notifyBPMCalculated(float bpm) {
         synchronized (this) {
             for (OnBPMCalculatedListener listener : listeners) {
-                listener.onBPMCalculated(bpm, beatsBuffer);
+                listener.onBPMCalculated(bpm);
             }
         }
     }
