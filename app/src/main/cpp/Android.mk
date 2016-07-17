@@ -7,7 +7,6 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../external/boost/include
 
 LOCAL_SRC_FILES += df-processor.cpp
 LOCAL_SRC_FILES += beat-analyzer.cpp
-LOCAL_SRC_FILES += cpu-features.cpp
 LOCAL_SRC_FILES += btrack.cpp
 
 LOCAL_SRC_FILES += external/kiss_fft/kiss_fft.c
@@ -21,10 +20,7 @@ LOCAL_SRC_FILES += tracker/CSD_detection_function.cpp
 LOCAL_SRC_FILES += tracker/math_utilities.cpp
 LOCAL_SRC_FILES += tracker/Tracker.cpp
 
-LOCAL_STATIC_LIBRARIES := cpufeatures
-
 LOCAL_LDLIBS := -llog -latomic
 
 
 include $(BUILD_SHARED_LIBRARY)
-$(call import-module,android/cpufeatures)
