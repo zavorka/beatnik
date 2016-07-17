@@ -138,6 +138,15 @@ public class MainActivity
             }
         });
 
+
+        //processor.addOnDFProcessorOutputListener(bTrack);
+        bTrack.addOnNewBPMListener(new BTrack.OnNewBPMListener() {
+            @Override
+            public void onNewBPM(double bpm) {
+                Log.v(TAG, "New BPM: " + bpm);
+            }
+        });
+
         processor.addOnDFProcessorOutputListener(analyzer);
         analyzer.addOnBPMCalculatedListener(this);
     }
