@@ -25,7 +25,6 @@ import re.bass.beatnik.audio.FFTProcessor;
 import re.bass.beatnik.audio.Microphone;
 import re.bass.beatnik.audio.NativeDFProcessor;
 import re.bass.beatnik.plot.GLPlotView;
-import re.bass.beatnik.utils.CPUFeatures;
 
 public class MainActivity
         extends AppCompatActivity
@@ -52,7 +51,6 @@ public class MainActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.v(TAG, "onCreate()");
-        CPUFeatures.logFeatures();
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
