@@ -13,7 +13,7 @@ public interface DFProcessor extends AudioInput.AudioListener {
     interface OnProcessorOutputListener {
         void onProcessorOutput(
                 DFProcessor sender,
-                double[] output
+                float[] output
         );
     }
 }

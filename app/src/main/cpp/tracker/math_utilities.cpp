@@ -1,5 +1,3 @@
-#include <numeric>
-#include <cmath>
 #include "math_utilities.hpp"
 
 using std::vector;

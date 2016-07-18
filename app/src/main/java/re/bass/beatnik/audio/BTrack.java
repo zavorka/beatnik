@@ -25,27 +25,20 @@ public class BTrack implements DFProcessor.OnProcessorOutputListener
             int stepSize
     );
 
-    private native double processDFSample(double sample);
+    private native float processDFSample(float sample);
+    private native float processDFSamples(float[] sample);
 
     @Override
-    public void onProcessorOutput(double[] output) {
-        double newBPM = 0.;
-        for (double value : output) {
-            double bpm = processDFSample(value);
-            // Log.v(TAG, "bpm: " + bpm);
-            if (bpm < 0.0) {
-                newBPM = bpm;
-            }
-        }
-
-        if (newBPM < 0.0) {
-            notifyOnNewBPMListeners(-newBPM);
+    public void onProcessorOutput(DFProcessor sender, float[] output) {
+        float bpm = processDFSamples(output);
+        if (!Float.isNaN(bpm)) {
+            notifyOnNewBPMListeners(bpm);
         }
     }
 
 
     public interface OnNewBPMListener {
-        void onNewBPM(double bpm);
+        void onNewBPM(float bpm);
     }
 
     public void addOnNewBPMListener(OnNewBPMListener listener) {
@@ -60,7 +53,7 @@ public class BTrack implements DFProcessor.OnProcessorOutputListener
         }
     }
 
-    private void notifyOnNewBPMListeners(double bpm) {
+    private void notifyOnNewBPMListeners(float bpm) {
         synchronized (listeners) {
             for (OnNewBPMListener listener : listeners) {
                 listener.onNewBPM(bpm);

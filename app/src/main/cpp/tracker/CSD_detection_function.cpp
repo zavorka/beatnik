@@ -18,7 +18,7 @@ namespace reBass
     {
     }
 
-    double
+    float
     CSD_detection_function::process_magnitudes(
             const vector<float> &magnitudes
     ){
@@ -35,7 +35,7 @@ namespace reBass
     CSD_detection_function::whiten()
     {
         for (unsigned int i = 0; i < frameLength; ++i) {
-            double m = magnitude[i];
+            float m = magnitude[i];
             if (m < peak_magnitude[i]) {
                 m = m + (peak_magnitude[i] - m) * kWhitenRelaxCoeff;
             }
@@ -47,17 +47,17 @@ namespace reBass
         }
     }
 
-    double
+    float
     CSD_detection_function::broadband()
     {
-        double val = 0;
+        float val = 0;
 
         for (unsigned int i = 0; i < frameLength; i++) {
-            double squared_magnitude = magnitude[i] * magnitude[i];
-            if (previous_magnitude[i] > 0.0) {
+            float squared_magnitude = magnitude[i] * magnitude[i];
+            if (previous_magnitude[i] > 0.0f) {
                 double diff = 10.0 * log10(squared_magnitude / previous_magnitude[i]);
                 if (diff > DB_RISE) {
-                    val = val + 1.0;
+                    val = val + 1.0f;
                 }
             }
             previous_magnitude[i] = squared_magnitude;

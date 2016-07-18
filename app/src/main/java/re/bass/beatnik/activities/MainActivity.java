@@ -20,7 +20,6 @@ import re.bass.beatnik.BuildConfig;
 import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
 import re.bass.beatnik.audio.BTrack;
-import re.bass.beatnik.audio.BeatAnalyzer;
 import re.bass.beatnik.audio.DFProcessor;
 import re.bass.beatnik.audio.FFTProcessor;
 import re.bass.beatnik.audio.Microphone;
@@ -29,7 +28,7 @@ import re.bass.beatnik.plot.GLPlotView;
 
 public class MainActivity
         extends AppCompatActivity
-        implements BeatAnalyzer.OnBPMCalculatedListener
+        implements BTrack.OnNewBPMListener
 {
     private final static String TAG = "MainActivity";
 
@@ -38,7 +37,6 @@ public class MainActivity
     }
 
     private AudioInput input;
-    private BeatAnalyzer analyzer;
     private NativeDFProcessor processor;
     private BTrack bTrack;
 
@@ -73,7 +71,6 @@ public class MainActivity
         Log.v(TAG, "stop()");
 
         input.stop();
-        analyzer.stop();
     }
 
     @Override
@@ -89,7 +86,6 @@ public class MainActivity
         final BeatnikOptions options = new BeatnikOptions();
         input = new Microphone(options);
         processor = new NativeDFProcessor(options);
-        analyzer = new BeatAnalyzer(options);
         bTrack = new BTrack(options);
 
         input.addListener(processor);
@@ -103,58 +99,18 @@ public class MainActivity
         processor.setDFPlotBuffer(dfView.getPlotBuffer(), dfView.getPlotBuffer().capacity());
         processor.addOnDFProcessorOutputListener(new DFProcessor.OnProcessorOutputListener() {
             @Override
-            public void onProcessorOutput(DFProcessor sender, double[] output) {
+            public void onProcessorOutput(DFProcessor sender, float[] output) {
                 dfView.requestRender();
             }
         });
-        /*
-        processor.addOnNewFFTDataListener(
-                new FFTProcessor.OnNewFFTDataListener() {
-                    @Override
-                    public void onNewFFTData(
-                            FFTProcessor sender
-                    ) {
-                        fftView.updateWithFFTMagnitudes(sender.getMagnitudes());
-                    }
-                }
-        );
-        processor.addOnDFProcessorOutputListener(
-                new DFProcessor.OnProcessorOutputListener() {
-                    @Override
-                    public void onProcessorOutput(
-                            double[] output
-                    ) {
-                        dfView.appendArray(output);
-                    }
-        });
-        */
 
-
-        //processor.addOnDFProcessorOutputListener(bTrack);
-        bTrack.addOnNewBPMListener(new BTrack.OnNewBPMListener() {
-            @Override
-            public void onNewBPM(double bpm) {
-                Log.v(TAG, "New BPM: " + bpm);
-            }
-        });
-
-
-        //processor.addOnDFProcessorOutputListener(bTrack);
-        bTrack.addOnNewBPMListener(new BTrack.OnNewBPMListener() {
-            @Override
-            public void onNewBPM(double bpm) {
-                Log.v(TAG, "New BPM: " + bpm);
-            }
-        });
-
-        processor.addOnDFProcessorOutputListener(analyzer);
-        analyzer.addOnBPMCalculatedListener(this);
+        processor.addOnDFProcessorOutputListener(bTrack);
+        bTrack.addOnNewBPMListener(this);
     }
 
     private void startRecording() {
         Log.v(TAG, "startRecording()");
         input.start();
-        analyzer.start();
     }
 
     private void doNothing() {
@@ -168,15 +124,12 @@ public class MainActivity
     }
 
     @Override
-    public void onBPMCalculated(final float bpm) {
+    public void onNewBPM(final float bpm) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (BuildConfig.DEBUG) {
                     Log.v(TAG, "BPM calculated: " + String.valueOf(bpm));
-                }
-                if (Float.isNaN(bpm)) {
-                    return;
                 }
 
                 bpmUnitText.setVisibility(View.VISIBLE);

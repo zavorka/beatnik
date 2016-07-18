@@ -6,7 +6,6 @@
 
 #include "beatnik/FFT_rolling.hpp"
 #include "tracker/CSD_detection_function.hpp"
-#include "tracker/Tracker.hpp"
 #include "log.h"
 
 static reBass::FFT_rolling* fft;
@@ -30,8 +29,8 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_init(
         jint stepSize,
         jint windowSize
 ) {
-    input_buffer = new vector<float>((size_t) stepSize);
-    short_buffer = new vector<short>((size_t) stepSize);
+    input_buffer = new std::vector<float>((size_t) stepSize);
+    short_buffer = new std::vector<short>((size_t) stepSize);
     fft = new reBass::FFT_rolling((size_t) windowSize);
     detection_function = new reBass::CSD_detection_function(
             (size_t) (windowSize / 2 + 1),
@@ -71,11 +70,11 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
     JNIEnv* env,
     jobject object, /* this */
     jshortArray inputArray,
-    jdoubleArray outputArray
+    jfloatArray outputArray
 ) {
     auto windows_count = env->GetArrayLength(outputArray);
     auto step_size = input_buffer->size();
-    auto output = env->GetDoubleArrayElements(outputArray, nullptr);
+    auto output = env->GetFloatArrayElements(outputArray, nullptr);
     float average = 0.0f;
 
     for (unsigned short i = 0; i < windows_count; i++) {
@@ -92,7 +91,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
                 input_buffer->begin(),
                 [] (short sample) {
                     return (float) sample
-                           / (float) numeric_limits<short>::max();
+                           / (float) std::numeric_limits<short>::max();
                 }
         );
 
@@ -105,7 +104,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
         average += (float) output[i] / windows_count * 2;
     }
 
-    env->ReleaseDoubleArrayElements(outputArray, output, 0);
+    env->ReleaseFloatArrayElements(outputArray, output, 0);
 
     if (df_plot_circular_buffer != nullptr
             || df_plot_buffer != nullptr) {

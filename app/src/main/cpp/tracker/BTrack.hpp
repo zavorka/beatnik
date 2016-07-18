@@ -10,6 +10,8 @@
 #include <boost/circular_buffer.hpp>
 
 #include "../beatnik/Balanced_ACF.hpp"
+#include "RCF_processor.hpp"
+#include "Viterbi_decoder.hpp"
 
 namespace reBass {
     class BTrack {
@@ -18,52 +20,64 @@ namespace reBass {
                 unsigned int sample_rate,
                 unsigned int step_size
         );
-        double process_DF_sample(double sample);
+        float process_DF_sample(float sample);
     private:
-        static constexpr double RAY_PARAM = 963.0;
-        static constexpr double TIGHTNESS = 3.0;
+        static constexpr double TIGHTNESS = 5.0;
         static constexpr double ALPHA = 0.9;
-        static constexpr double DEFAULT_TEMPO = 150.0;
-        static constexpr double MAX_TEMPO = 240.0;
-        static constexpr double MIN_TEMPO = 120.0;
-        static constexpr double M_SIG = 961.0 / 8.0;
-        static constexpr unsigned int RESAMPLED_DF_LENGTH = 2048;
-        static constexpr unsigned int ACF_FFT_LENGTH = RESAMPLED_DF_LENGTH * 2;
-        static constexpr unsigned int COMB_FILTER_BANK_OUTPUT_SIZE = 128;
-        static constexpr unsigned int DELTA_SIZE = 961;
+        static constexpr float MIN_TEMPO = 90.0f;
+        static constexpr float MAX_TEMPO = MIN_TEMPO * 2.f;
+        static constexpr float DEFAULT_TEMPO = (MAX_TEMPO + MIN_TEMPO) / 2.f;
+        static constexpr unsigned int DF_LENGTH = 2048;
+        static constexpr unsigned int DF_STEP = 128;
+        static constexpr unsigned int DF_WINDOW = 512;
+        static constexpr unsigned int RCF_ROWS = DF_LENGTH / DF_STEP;
+        static constexpr unsigned int RCF_COLUMNS = 128;
 
         const unsigned int sample_rate;
         const unsigned int step_size;
         const double tempo_to_lag_factor;
+        const double ray_param;
 
-        bool beat_due_in_frame;
-
-        int beat_counter;
-        int m0;
+        std::size_t counter;
+        std::size_t countdown;
 
         double beat_period;
-        double estimated_tempo;
 
-        boost::circular_buffer<double> df_buffer;
-        boost::circular_buffer<double> cumulative_score;
+        boost::circular_buffer<float> df_buffer;
+        //boost::circular_buffer<double> cumulative_score;
+        std::array<double, DF_LENGTH> cumulative_score;
+        std::array<int, DF_LENGTH> backlink;
 
-        std::vector<float> resampled_DF;
-        Balanced_ACF acf;
+        RCF_processor<DF_WINDOW> rcf_processor;
+        Viterbi_decoder<RCF_ROWS, RCF_COLUMNS> decoder;
 
-        std::array<double, 128> comb_filter_bank_output;
-        std::array<double, 128> weighting_vector;
+        boost::circular_buffer<std::array<double, RCF_COLUMNS>> rcf_buffer;
+        std::array<std::array<double, RCF_COLUMNS>, RCF_ROWS> rcf_matrix;
 
-        std::array<double, 961> observation_vector;
-        std::array<std::array<double, 961>, 961> transition_matrix;
-        std::vector<double> delta;
-        std::array<double, 961> previous_delta;
+        std::vector<int> beats;
 
-        void predict_beat();
-        void update_cumulative_score(double df_sample);
-        void resample_DF();
+        struct Period_constants {
+            const int min_range;
+            const int max_range;
+            const int range_length;
 
-        void calculate_tempo();
+            std::vector<double> txwt;
 
-        void comb_filter(const std::vector<float> &acf);
+            Period_constants(int period)
+                    : min_range(-2 * period),
+                      max_range((int) round(-0.5 * period)),
+                      range_length(max_range - min_range + 1),
+                      txwt(range_length)
+            {
+                auto mu = static_cast<double>(period);
+                for (auto i = 0; i < range_length; i++) {
+                    txwt[i] = std::exp(-0.5 * std::pow(TIGHTNESS * std::log(2. - (i / mu)), 2));
+                }
+            }
+        };
+
+        std::vector<Period_constants> period_constants;
+
+        float calculate_tempo();
     };
 }

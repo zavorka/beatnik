@@ -13,7 +13,7 @@ namespace reBass
     public:
         CSD_detection_function(unsigned int frameLength, unsigned int stepSize);
 
-        double process_magnitudes(
+        float process_magnitudes(
                 const std::vector<float>& magnitudes
         );
 
@@ -21,7 +21,7 @@ namespace reBass
         constexpr static double DB_RISE = 3.0;
     private:
         void whiten();
-        double broadband();
+        float broadband();
 
         unsigned int frameLength;
         unsigned int stepSize;

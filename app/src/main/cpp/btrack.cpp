@@ -25,11 +25,35 @@ Java_re_bass_beatnik_audio_BTrack_init(
 }
 
 extern "C"
-double
+float
 Java_re_bass_beatnik_audio_BTrack_processDFSample(
         JNIEnv* env,
         jobject object, /* this */
-        jdouble dfValue
+        jfloat dfValue
 ) {
-    return bTrack->process_DF_sample(dfValue * multiplier);
+    return bTrack->process_DF_sample(dfValue * (float) multiplier);
+}
+
+extern "C"
+float
+Java_re_bass_beatnik_audio_BTrack_processDFSamples(
+        JNIEnv* env,
+        jobject object, /* this */
+        jfloatArray valuesArray
+) {
+    jsize length = env->GetArrayLength(valuesArray);
+    auto values = env->GetFloatArrayElements(valuesArray, nullptr);
+
+    float final_bpm = NAN;
+
+    for (jsize i = 0; i < length; i++) {
+        float bpm = bTrack->process_DF_sample(values[i] *= multiplier);
+        if (bpm > 0.f) {
+            final_bpm = bpm;
+        }
+    }
+
+    env->ReleaseFloatArrayElements(valuesArray, values, JNI_ABORT);
+
+    return final_bpm;
 }

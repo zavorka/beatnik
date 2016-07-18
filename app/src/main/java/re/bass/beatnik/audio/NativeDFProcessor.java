@@ -27,7 +27,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
     private final float[] magnitudes;
     private boolean magnitudesUpToDate = false;
 
-    private double[] dfOutput;
+    private float[] dfOutput;
 
     private final List<OnProcessorOutputListener> outputListeners =
             new ArrayList<>();
@@ -51,7 +51,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
     private native void dealloc();
     private native void processAudio(
             short[] buffer,
-            double[] output
+            float[] output
     );
     private native void getFrequencyData(
             float[] buffer
@@ -77,7 +77,7 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
         }
 
         if (dfOutput == null || dfOutput.length != (buffer.length / stepSize)) {
-            dfOutput = new double[buffer.length / stepSize];
+            dfOutput = new float[buffer.length / stepSize];
         }
 
         processAudio(
