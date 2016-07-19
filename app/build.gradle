@@ -8,14 +8,14 @@ android {
         applicationId "re.bass.beatnik"
         minSdkVersion 19
         targetSdkVersion 24
-        versionCode 15
-        versionName "0.6.0"
+        versionCode 16
+        versionName "0.6.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             ndkBuild {
                 arguments "NDK_APPLICATION_MK:=Application.mk"
                 abiFilters "armeabi", "armeabi-v7a", "arm64-v8a"
-                cppFlags "-std=c++11", "-frtti", "-fexceptions"
+                cppFlags "-std=c++14", "-frtti", "-fexceptions"
             }
         }
     }

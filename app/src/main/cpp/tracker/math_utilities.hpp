@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <array>
+#include <iterator>
 #include <algorithm>
 #include <numeric>
 #include <cmath>
@@ -12,6 +13,8 @@
 #endif
 
 using std::size_t;
+using std::cbegin;
+using std::cend;
 
 namespace reBass
 {
@@ -43,8 +46,8 @@ namespace reBass
                 size_t length
         ) {
             double sum = std::accumulate(
-                data.cbegin() + start,
-                data.cbegin() + start + length,
+                cbegin(data) + start,
+                cbegin(data) + start + length,
                 0
             );
             return sum / length;
@@ -78,8 +81,7 @@ namespace reBass
             const size_t p_post = 7;
             const size_t p_pre = 8;
 
-            auto t = std::min(N, p_post);
-            size_t i, k;
+            size_t i;
 
             for (i = 0; i < N; i++) {
                 size_t first = std::max((size_t) 0, i - p_pre);
@@ -88,22 +90,6 @@ namespace reBass
                 thresh[i] = mean(array, first, last - first + 1);
             }
 
-
-            /*
-            for (i = 0; i <= t; i++) {
-                k = std::min((i + p_pre), N);
-                thresh[i] = mean(array, 1, k - 1);
-            }
-
-            for (i = t + 1; i < N - p_post; i++) {
-                thresh[i] = mean(array, i - p_pre, p_post + p_pre);
-            }
-
-            for (i = N - p_post; i < N; i++) {
-                k = std::max((i - p_post), N);
-                thresh[i] = mean(array, k, N - k);
-            }
-            */
 
             for (i = 0; i < N; i++) {
                 array[i] = std::max(array[i] - thresh[i], (T) 0);

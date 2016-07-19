@@ -2,7 +2,9 @@
 // Created by Roman Beránek on 7/14/16.
 //
 
+#include <iterator>
 #include <cmath>
+
 #include "BTrack.hpp"
 #include "math_utilities.hpp"
 
@@ -22,6 +24,8 @@ namespace reBass
             counter(0),
             countdown(DF_LENGTH / DF_WINDOW),
             beat_period(tempo_to_lag_factor / DEFAULT_TEMPO),
+            should_calculate_periods(false),
+            should_calculate_tempo(false),
             df_buffer(DF_LENGTH),
             rcf_processor(ray_param),
             decoder(ray_param),
@@ -61,44 +65,99 @@ namespace reBass
 
         df_buffer.push_back(sample);
 
-        if (counter % DF_STEP) {
-            rcf_buffer.push_back(
-                    rcf_processor.get_rcf(
-                            df_buffer.end() - DF_WINDOW
-                    )
-            );
+        auto bpm = 0.f;
+
+        if (should_calculate_periods) {
+            calculate_rcf();
+            should_calculate_periods = false;
+        } else if (should_calculate_tempo) {
+            bpm = calculate_tempo();
+            should_calculate_tempo = false;
+        }
+
+        if (counter % DF_STEP == 0) {
+            calculate_rcf();
         }
 
 
-        if (counter == DF_WINDOW) {
-            counter = 0;
-        } else {
-            counter++;
-        }
-
-        if (counter == 1) {
+        if (counter == 0) {
             if (countdown <= 0) {
-                return calculate_tempo();
+                should_calculate_periods = true;
             } else {
                 countdown--;
             }
         }
 
-        return 0.f;
+        counter = (counter + 1) % DF_WINDOW;
+
+        return bpm;
     }
 
     float
-    BTrack::calculate_tempo()
+    BTrack::process_DF_samples(const std::vector<float> &samples)
     {
+        std::for_each(
+                samples.begin(),
+                samples.end(),
+                [](float sample) {
+                    return sample + 0.0001f;
+                }
+        );
+
+        df_buffer.insert(df_buffer.end(), samples.begin(), samples.end());
+        auto increment = samples.size();
+        counter = (counter + increment) % DF_WINDOW;
+
+
+        auto bpm = 0.f;
+
+        if (should_calculate_periods) {
+            calculate_periods();
+            should_calculate_periods = false;
+            should_calculate_tempo = true;
+        } else if (should_calculate_tempo) {
+            bpm = calculate_tempo();
+            should_calculate_tempo = false;
+        }
+
+        if (counter % DF_STEP < increment) {
+            calculate_rcf();
+        }
+
+        if (counter % DF_WINDOW < increment) {
+            if (countdown <= 0) {
+                should_calculate_periods = true;
+            } else {
+                countdown--;
+            }
+        }
+
+        return bpm;
+    }
+
+    void
+    BTrack::calculate_rcf() {
+        rcf_buffer.push_back(
+                rcf_processor.get_rcf(
+                        df_buffer.end() - DF_WINDOW
+                )
+        );
+    }
+
+    void
+    BTrack::calculate_periods() {
         std::copy(
                 rcf_buffer.begin(),
                 rcf_buffer.end(),
                 rcf_matrix.begin()
         );
-        auto periods = decoder.decode(rcf_matrix);
-        auto average_period = math_utilities::mean(periods);
+        periods = decoder.decode(rcf_matrix);
+    }
 
-        for (auto i = 0; i < periods.size(); i++) {
+    float
+    BTrack::calculate_tempo()
+    {
+        for (auto i = 0; i < RCF_ROWS; i++) {
             auto &p = period_constants[periods[i] - 1];
 
             for (auto j = 0; j < DF_STEP; j++) {

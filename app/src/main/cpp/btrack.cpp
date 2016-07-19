@@ -44,16 +44,13 @@ Java_re_bass_beatnik_audio_BTrack_processDFSamples(
     jsize length = env->GetArrayLength(valuesArray);
     auto values = env->GetFloatArrayElements(valuesArray, nullptr);
 
-    float final_bpm = NAN;
-
+    auto values_vector = std::vector<float>(length);
     for (jsize i = 0; i < length; i++) {
-        float bpm = bTrack->process_DF_sample(values[i] *= multiplier);
-        if (bpm > 0.f) {
-            final_bpm = bpm;
-        }
+        values_vector[i] = (values[i] *= multiplier);
     }
-
     env->ReleaseFloatArrayElements(valuesArray, values, JNI_ABORT);
 
-    return final_bpm;
+    const float bpm = bTrack->process_DF_samples(values_vector);
+
+    return (bpm > 0.f) ? bpm : NAN;
 }

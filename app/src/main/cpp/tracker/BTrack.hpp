@@ -21,6 +21,7 @@ namespace reBass {
                 unsigned int step_size
         );
         float process_DF_sample(float sample);
+        float process_DF_samples(const std::vector<float> &samples);
     private:
         static constexpr double TIGHTNESS = 5.0;
         static constexpr double ALPHA = 0.9;
@@ -43,6 +44,10 @@ namespace reBass {
 
         double beat_period;
 
+        bool should_calculate_periods;
+        bool should_calculate_tempo;
+
+
         boost::circular_buffer<float> df_buffer;
         //boost::circular_buffer<double> cumulative_score;
         std::array<double, DF_LENGTH> cumulative_score;
@@ -55,6 +60,7 @@ namespace reBass {
         std::array<std::array<double, RCF_COLUMNS>, RCF_ROWS> rcf_matrix;
 
         std::vector<int> beats;
+        std::array<std::size_t, RCF_ROWS> periods;
 
         struct Period_constants {
             const int min_range;
@@ -79,5 +85,7 @@ namespace reBass {
         std::vector<Period_constants> period_constants;
 
         float calculate_tempo();
+        void calculate_rcf();
+        void calculate_periods();
     };
 }
