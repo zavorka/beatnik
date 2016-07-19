@@ -33,8 +33,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_init(
     short_buffer = new std::vector<short>((size_t) stepSize);
     fft = new reBass::FFT_rolling((size_t) windowSize);
     detection_function = new reBass::CSD_detection_function(
-            (size_t) (windowSize / 2 + 1),
-            (size_t) stepSize
+            (size_t) (windowSize / 2 + 1)
     );
 }
 

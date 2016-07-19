@@ -11,7 +11,7 @@ namespace reBass
     class CSD_detection_function final
     {
     public:
-        CSD_detection_function(unsigned int frameLength, unsigned int stepSize);
+        CSD_detection_function(unsigned int frameLength);
 
         float process_magnitudes(
                 const std::vector<float>& magnitudes
@@ -24,7 +24,6 @@ namespace reBass
         float broadband();
 
         unsigned int frameLength;
-        unsigned int stepSize;
 
         std::vector<float> magnitude;
         std::vector<float> previous_magnitude;

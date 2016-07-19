@@ -7,11 +7,9 @@ using std::vector;
 namespace reBass
 {
     CSD_detection_function::CSD_detection_function(
-            unsigned int frameLength,
-            unsigned int stepSize
+            unsigned int frameLength
     )
         : frameLength(frameLength),
-          stepSize(stepSize),
           magnitude(frameLength),
           previous_magnitude(frameLength),
           peak_magnitude(frameLength)
