@@ -7,7 +7,7 @@
 #include <array>
 #include <cmath>
 
-#include "../beatnik/Balanced_ACF.hpp"
+#include "Balanced_ACF.hpp"
 #include "math_utilities.hpp"
 
 namespace reBass

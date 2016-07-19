@@ -9,7 +9,7 @@
 #include <vector>
 #include <boost/circular_buffer.hpp>
 
-#include "../beatnik/Balanced_ACF.hpp"
+#include "Balanced_ACF.hpp"
 #include "RCF_processor.hpp"
 #include "Viterbi_decoder.hpp"
 

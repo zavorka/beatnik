@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <boost/circular_buffer.hpp>
 
-#include "beatnik/FFT_rolling.hpp"
+#include "tracker/FFT_rolling.hpp"
 #include "tracker/CSD_detection_function.hpp"
 #include "log.h"
 

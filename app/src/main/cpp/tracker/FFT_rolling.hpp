@@ -11,7 +11,7 @@
 #include <boost/circular_buffer.hpp>
 
 #include "Window.hpp"
-#include "../external/kiss_fft/kiss_fftr.h"
+#include "external/kiss_fft/kiss_fftr.h"
 
 namespace reBass {
     template <typename T> using deleted_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
