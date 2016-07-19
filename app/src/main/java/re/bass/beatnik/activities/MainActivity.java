@@ -22,6 +22,7 @@ import re.bass.beatnik.audio.FFTProcessor;
 import re.bass.beatnik.audio.Microphone;
 import re.bass.beatnik.audio.NativeDFProcessor;
 import re.bass.beatnik.plot.GLPlotView;
+import re.bass.beatnik.plot.RenderThread;
 
 public class MainActivity
         extends Activity
@@ -36,6 +37,7 @@ public class MainActivity
     private AudioInput input;
     private NativeDFProcessor processor;
     private BTrack bTrack;
+    private RenderThread renderThread;
 
     RelativeLayout content;
     TextView bpmNumberText;
@@ -84,6 +86,7 @@ public class MainActivity
         Log.v(TAG, "stop()");
 
         input.stop();
+        renderThread.stop();
     }
 
     @Override
@@ -104,27 +107,26 @@ public class MainActivity
         input.addListener(processor);
 
         processor.setFFTPlotBuffer(fftView.getPlotBuffer(), fftView.getPlotBuffer().capacity());
-        processor.addOnNewFFTDataListener(new FFTProcessor.OnNewFFTDataListener() {
-            @Override
-            public void onNewFFTData(FFTProcessor sender) {
-                fftView.requestRender();
-            }
-        });
         processor.setDFPlotBuffer(dfView.getPlotBuffer(), dfView.getPlotBuffer().capacity());
         processor.addOnDFProcessorOutputListener(new DFProcessor.OnProcessorOutputListener() {
             @Override
             public void onProcessorOutput(DFProcessor sender, float[] output) {
-                dfView.requestRender();
+                renderThread.requestRender();
             }
         });
 
         processor.addOnDFProcessorOutputListener(bTrack);
         bTrack.addOnNewBPMListener(this);
+
+        renderThread = new RenderThread();
+        renderThread.addGlSurfaceView(dfView);
+        renderThread.addGlSurfaceView(fftView);
     }
 
     private void startRecording() {
         Log.v(TAG, "startRecording()");
         input.start();
+        renderThread.start();
     }
 
     private void doNothing() {

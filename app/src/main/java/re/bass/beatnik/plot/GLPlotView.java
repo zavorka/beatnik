@@ -2,7 +2,9 @@ package re.bass.beatnik.plot;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 
 import java.nio.FloatBuffer;
 
@@ -14,6 +16,8 @@ import re.bass.beatnik.utils.MultisampleConfigChooser;
 
 public class GLPlotView extends GLSurfaceView
 {
+    private static final String TAG = "GLPlotView";
+
     protected static final int MAX_POINTS = 256;
     protected final PlotRenderer renderer;
 
@@ -28,7 +32,14 @@ public class GLPlotView extends GLSurfaceView
         setEGLContextClientVersion(2);
 
         renderer = new PlotRenderer(MAX_POINTS);
-        setEGLConfigChooser(new MultisampleConfigChooser());
+
+        Log.v(TAG, Build.MODEL);
+        if (android.os.Build.MODEL.equals("Android SDK built for x86_64")) {
+            setEGLConfigChooser(8, 8, 8, 8, 16, 0);
+        } else {
+            setEGLConfigChooser(new MultisampleConfigChooser());
+        }
+
         setRenderer(renderer);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
