@@ -1,20 +1,17 @@
 package re.bass.beatnik.activities;
 
 import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.BuildConfig;
 import re.bass.beatnik.R;
@@ -27,7 +24,7 @@ import re.bass.beatnik.audio.NativeDFProcessor;
 import re.bass.beatnik.plot.GLPlotView;
 
 public class MainActivity
-        extends AppCompatActivity
+        extends Activity
         implements BTrack.OnNewBPMListener
 {
     private final static String TAG = "MainActivity";
@@ -40,12 +37,12 @@ public class MainActivity
     private NativeDFProcessor processor;
     private BTrack bTrack;
 
-    @BindView(R.id.content_layout) RelativeLayout content;
-    @BindView(R.id.bpm_number_text) TextView bpmNumberText;
-	@BindView(R.id.bpm_unit_text) TextView bpmUnitText;
-    @BindView(R.id.fuck_off_text) TextView fuckOffText;
-    @BindView(R.id.df_view) GLPlotView dfView;
-    @BindView(R.id.fft_view) GLPlotView fftView;
+    RelativeLayout content;
+    TextView bpmNumberText;
+	TextView bpmUnitText;
+    TextView fuckOffText;
+    GLPlotView dfView;
+    GLPlotView fftView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +50,19 @@ public class MainActivity
         Log.v(TAG, "onCreate()");
 
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+
+        content = (RelativeLayout) findViewById(R.id.content_layout);
+        bpmNumberText = (TextView) findViewById(R.id.bpm_number_text);
+        bpmUnitText = (TextView) findViewById(R.id.bpm_unit_text);
+        fuckOffText = (TextView) findViewById(R.id.fuck_off_text);
+        dfView = (GLPlotView) findViewById(R.id.df_view);
+        fftView = (GLPlotView) findViewById(R.id.fft_view);
+        fuckOffText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onUserChangedMind();
+            }
+        });
 
         initialize();
     }
@@ -62,7 +71,11 @@ public class MainActivity
     protected void onStart() {
         super.onStart();
 
-        getRecordingPermissionAndStart();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getRecordingPermissionAndStart();
+        } else {
+            start();
+        }
     }
 
     @Override
@@ -89,6 +102,7 @@ public class MainActivity
         bTrack = new BTrack(options);
 
         input.addListener(processor);
+
         processor.setFFTPlotBuffer(fftView.getPlotBuffer(), fftView.getPlotBuffer().capacity());
         processor.addOnNewFFTDataListener(new FFTProcessor.OnNewFFTDataListener() {
             @Override
@@ -118,7 +132,6 @@ public class MainActivity
         fuckOffText.setVisibility(View.VISIBLE);
     }
 
-    @OnClick(R.id.fuck_off_text)
     protected void onUserChangedMind() {
         getRecordingPermissionAndStart();
     }
@@ -138,14 +151,17 @@ public class MainActivity
         });
     }
 
+    private void start() {
+        onPermissionGranted();
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
     private void getRecordingPermissionAndStart( /* or die trying */
     ) {
-        if (ContextCompat.checkSelfPermission(
-                this,
+        if (checkSelfPermission(
                 Manifest.permission.RECORD_AUDIO
         ) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
+            if (shouldShowRequestPermissionRationale(
                     Manifest.permission.RECORD_AUDIO
             )) {
                 Log.v(TAG, "SHOULD show request permission rationale");
@@ -186,10 +202,10 @@ public class MainActivity
         doNothing();
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
     private void requestAudioRecordingPermission() {
         Log.d(TAG, "Requesting mic permission.");
-        ActivityCompat.requestPermissions(
-                this,
+        requestPermissions(
                 new String[] { Manifest.permission.RECORD_AUDIO},
                 0);
     }
