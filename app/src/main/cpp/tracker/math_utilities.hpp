@@ -18,6 +18,9 @@ using std::cend;
 
 namespace reBass
 {
+    template <typename T, std::size_t Rows, std::size_t Columns>
+    using matrix = std::array<std::array<T, Columns>, Rows>;
+
     /**
      * Static helper functions for simple mathematical calculations.
      */
@@ -27,24 +30,12 @@ namespace reBass
          * Return the mean of the subset of the given vector identified by
          * start and count.
          */
-        double mean(
-                const std::vector<double> &data,
-                size_t start,
-                size_t count
-        );
-
-        float mean(
-                const std::vector<float> &data,
-                size_t start,
-                size_t count
-        );
-
         template <typename T, size_t N>
         double mean(
                 const std::array<T, N> &data,
                 size_t start,
                 size_t length
-        ) {
+        ) noexcept {
             double sum = std::accumulate(
                 cbegin(data) + start,
                 cbegin(data) + start + length,
@@ -56,22 +47,9 @@ namespace reBass
         template <typename T, size_t N>
         double mean(
                 const std::array<T, N> &data
-        ) {
+        ) noexcept {
             return mean(data, 0, N);
         };
-
-        /**
-         * The principle argument function. Map the phase angle ang into
-         * the range [-pi,pi).
-         */
-        double princarg( double ang );
-
-        /**
-         * Threshold the input/output vector data against a moving-mean
-         * average filter.
-         */
-        void adaptive_threshold(std::vector<double> &data);
-        void adaptive_threshold(std::vector<float> &data);
 
         template <typename T, size_t N>
         void adaptive_threshold(std::array<T, N> &array)
@@ -96,8 +74,6 @@ namespace reBass
             }
         };
 
-        void normalize(std::vector<double> &data);
-
         template <typename T, size_t N>
         void normalize(std::array<T, N> &data) {
             T sum = 0;
@@ -117,10 +93,15 @@ namespace reBass
         template <size_t N>
         void comb_filter(
                 const std::array<float, N> &input,
-                const std::array<double, N/4> &weighting_vector,
-                std::array<double, N/4> &output
-        ) {
-            output.fill(0.);
+                const std::array<float, N/4> &weighting_vector,
+                std::array<float, N/4> &output
+        ) noexcept {
+            static_assert(
+                    N % 4 == 0,
+                    "Comb filter output size must be a multiple of 4."
+            );
+
+            output.fill(0.f);
             for (auto i = 2; i < N/4; i++) {
                 for (auto a = 1; a <= 4; a++) {
                     for (auto b = 1 - a; b <= a - 1; b++) {

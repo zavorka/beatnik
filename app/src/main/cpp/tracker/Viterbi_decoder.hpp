@@ -19,13 +19,16 @@ namespace reBass
     class Viterbi_decoder
     {
     public:
-        Viterbi_decoder(double ray_param)
+        //static_assert(T % 4 == 0, "");
+        static_assert(Q % 4 == 0, "");
+
+        Viterbi_decoder(float ray_param) noexcept
         {
             double m_sig = (double) Q / 8.;
             for (auto i = PADDING; i < Q - PADDING; i++) {
                 for (auto j = PADDING; j < Q - PADDING; j++) {
                     transition_matrix[i][j] =
-                            std::exp(
+                            (float) std::exp(
                                     (-1. * (j - i) * (j - i))
                                     / (2. * m_sig * m_sig)
                             );
@@ -35,12 +38,15 @@ namespace reBass
             for (int q = 0; q < Q; q++) {
                 weighting_vector[q] =
                         q / (ray_param * ray_param)
-                        * std::exp(-1. * q * q / (2. * std::pow(ray_param, 2.0)));
+                        * (float) std::exp(
+                                -1. * q * q
+                                / (2. * std::pow(ray_param, 2.0))
+                        );
             }
         }
 
         const std::array<std::size_t, T>&
-        decode(const array<array<double, Q>, T> &rcf_matrix)
+        decode(const array<array<float, Q>, T> &rcf_matrix) noexcept
         {
             for (auto q = 0; q < Q; q++) {
                 delta[0][q] = weighting_vector[q] * rcf_matrix[0][q];
@@ -87,10 +93,10 @@ namespace reBass
         };
     private:
         static constexpr std::size_t PADDING = Q / 8;
-        array<array<double, Q>, Q> transition_matrix;
-        array<array<double, Q>, T> delta;
-        array<array<double, Q>, T> psi;
-        array<double, Q> weighting_vector;
+        matrix<float, Q, Q> transition_matrix;
+        array<array<float, Q>, T> delta;
+        matrix<int, T, Q> psi;
+        array<float, Q> weighting_vector;
         array<std::size_t, T> best_path;
     };
 }

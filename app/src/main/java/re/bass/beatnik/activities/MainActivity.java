@@ -18,11 +18,10 @@ import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
 import re.bass.beatnik.audio.BTrack;
 import re.bass.beatnik.audio.DFProcessor;
-import re.bass.beatnik.audio.FFTProcessor;
 import re.bass.beatnik.audio.Microphone;
 import re.bass.beatnik.audio.NativeDFProcessor;
 import re.bass.beatnik.plot.GLPlotView;
-import re.bass.beatnik.plot.RenderThread;
+import re.bass.beatnik.plot.PlotUpdater;
 
 public class MainActivity
         extends Activity
@@ -36,15 +35,16 @@ public class MainActivity
 
     private AudioInput input;
     private NativeDFProcessor processor;
+    @SuppressWarnings("FieldCanBeLocal")
     private BTrack bTrack;
-    private RenderThread renderThread;
+    private PlotUpdater plotUpdater;
 
-    RelativeLayout content;
-    TextView bpmNumberText;
-	TextView bpmUnitText;
-    TextView fuckOffText;
-    GLPlotView dfView;
-    GLPlotView fftView;
+    private RelativeLayout content;
+    private TextView bpmNumberText;
+	private TextView bpmUnitText;
+    private TextView fuckOffText;
+    private GLPlotView dfView;
+    private GLPlotView fftView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +72,7 @@ public class MainActivity
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart()");
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getRecordingPermissionAndStart();
@@ -83,15 +84,16 @@ public class MainActivity
     @Override
     protected void onStop() {
         super.onStop();
-        Log.v(TAG, "stop()");
+        Log.d(TAG, "onStop()");
 
         input.stop();
-        renderThread.stop();
+        plotUpdater.stop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy()");
         processor.destroy();
     }
 
@@ -102,31 +104,31 @@ public class MainActivity
         final BeatnikOptions options = new BeatnikOptions();
         input = new Microphone(options);
         processor = new NativeDFProcessor(options);
-        bTrack = new BTrack(options);
+        bTrack = new BTrack();
 
         input.addListener(processor);
 
-        processor.setFFTPlotBuffer(fftView.getPlotBuffer(), fftView.getPlotBuffer().capacity());
-        processor.setDFPlotBuffer(dfView.getPlotBuffer(), dfView.getPlotBuffer().capacity());
+        processor.attachFFTPlotView(fftView);
+        processor.attachDFPlotView(dfView);
         processor.addOnDFProcessorOutputListener(new DFProcessor.OnProcessorOutputListener() {
             @Override
             public void onProcessorOutput(DFProcessor sender, float[] output) {
-                renderThread.requestRender();
+                plotUpdater.requestRender();
             }
         });
 
         processor.addOnDFProcessorOutputListener(bTrack);
         bTrack.addOnNewBPMListener(this);
 
-        renderThread = new RenderThread();
-        renderThread.addGlSurfaceView(dfView);
-        renderThread.addGlSurfaceView(fftView);
+        plotUpdater = new PlotUpdater();
+        plotUpdater.addGlSurfaceView(dfView);
+        plotUpdater.addGlSurfaceView(fftView);
     }
 
     private void startRecording() {
         Log.v(TAG, "startRecording()");
         input.start();
-        renderThread.start();
+        plotUpdater.start();
     }
 
     private void doNothing() {
@@ -160,6 +162,7 @@ public class MainActivity
     @TargetApi(Build.VERSION_CODES.M)
     private void getRecordingPermissionAndStart( /* or die trying */
     ) {
+        Log.d(TAG, "getRecordingPermissionAndStart()");
         if (checkSelfPermission(
                 Manifest.permission.RECORD_AUDIO
         ) != PackageManager.PERMISSION_GRANTED) {

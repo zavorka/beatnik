@@ -11,13 +11,13 @@ import re.bass.beatnik.Startable;
  * Created by curly on 7/19/16.
  */
 
-public class RenderThread implements Startable, Runnable
+public class PlotUpdater implements Startable, Runnable
 {
     final private List<GLSurfaceView> views = new ArrayList<>();
     Thread thread;
     boolean running = false;
 
-    public RenderThread() {
+    public PlotUpdater() {
         super();
     }
 
@@ -42,6 +42,9 @@ public class RenderThread implements Startable, Runnable
 
     public void stop() {
         running = false;
+        synchronized (this) {
+            notify();
+        }
         try {
             thread.join();
         } catch (InterruptedException e) {

@@ -11,13 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import re.bass.beatnik.BeatnikOptions;
-import re.bass.beatnik.Startable;
 
 import static android.media.AudioManager.STREAM_MUSIC;
-
-/**
- * Created by curly on 22/06/2016.
- */
 
 public class Microphone implements AudioInput
 {
@@ -26,15 +21,7 @@ public class Microphone implements AudioInput
         public void run() {
             Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
             AudioRecord record = buildAudioRecord();
-
-            if (record.getRecordingState() == AudioRecord.RECORDSTATE_RECORDING) {
-                throw new RuntimeException(
-                        "Recording has already started! (it shouldn't have)"
-                );
-            }
-
             record.startRecording();
-            notifyOnStartListeners();
 
             running = true;
 
@@ -50,31 +37,25 @@ public class Microphone implements AudioInput
     private final static String TAG = "Microphone";
     private static final int MIN_BUFFER_SIZE = 1024;
 
-    private int sampleRate;
-    private int stepSize;
+    private final int sampleRate;
+    private final int stepSize;
 
     private final static int AUDIO_SOURCE = MediaRecorder.AudioSource.MIC;
     private final static short ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private final static int CHANNEL_MASK = AudioFormat.CHANNEL_IN_MONO;
 
-    private final static int NOTIFICATION_PERIOD_IN_BUFFERS = 100;
-
     private short[] shortBuffer;
-    private float[] buffer;
     private int bufferSize = 0;
 
-    private boolean started = false;
     private boolean running = true;
 
     private AudioThread thread;
 
-    private List<AudioListener> listeners = new ArrayList<>();
+    private final List<AudioListener> listeners = new ArrayList<>();
 
     public Microphone(BeatnikOptions options) {
         this.sampleRate = options.getSampleRate();
         this.stepSize = options.getStepSize();
-
-        buffer = new float[getBufferSize()];
         shortBuffer = new short[getBufferSize()];
     }
 
@@ -95,18 +76,8 @@ public class Microphone implements AudioInput
         thread = null;
     }
 
-
-    private void notifyOnStartListeners() {
-        synchronized (this) {
-            started = true;
-            for (AudioListener listener : listeners) {
-                listener.onStart();
-            }
-        }
-    }
-
     private void notifyOnAudioListeners() {
-        synchronized (this) {
+        synchronized (listeners) {
             for (AudioListener listener : listeners) {
                 listener.onAudio(shortBuffer);
             }
@@ -116,7 +87,7 @@ public class Microphone implements AudioInput
     @Override
     public void addListener(AudioListener listener) {
         Log.v(TAG, "addListener()");
-        synchronized (this) {
+        synchronized (listeners) {
             listeners.add(listener);
         }
     }
@@ -124,7 +95,7 @@ public class Microphone implements AudioInput
     @Override
     public void removeListener(AudioListener listener) {
         Log.v(TAG, "removeListener()");
-        synchronized (this) {
+        synchronized (listeners) {
             listeners.remove(listener);
         }
     }
@@ -139,11 +110,6 @@ public class Microphone implements AudioInput
             ));
         }
         return bufferSize;
-    }
-
-    @Override
-    public int getBufferSizeInBytes() {
-        return getBufferSize() * getFrameSize();
     }
 
     @Override

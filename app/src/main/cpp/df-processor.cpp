@@ -1,18 +1,27 @@
 #include <jni.h>
 #include <string>
+#include <iterator>
+#include <array>
 #include <vector>
-#include <algorithm>
 #include <boost/circular_buffer.hpp>
 
-#include "tracker/FFT_rolling.hpp"
-#include "tracker/CSD_detection_function.hpp"
+#include "tracker/fft/FFT_rolling.hpp"
+#include "tracker/Broadband_DF.hpp"
+#include "tracker/constants.hpp"
+#include "tracker/vector_operations/multiplication.h"
 #include "log.h"
 
-static reBass::FFT_rolling* fft;
-static reBass::CSD_detection_function* detection_function;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
 
-static std::vector<float>* input_buffer;
-static std::vector<short>* short_buffer;
+using namespace reBass;
+using namespace reBass::constants;
+
+static FFT_rolling<FFT_WINDOW_LENGTH>* fft;
+static Broadband_DF<FFT_LENGTH>* detection_function;
+
+static std::array<float, FFT_STEP_SIZE>* input_buffer;
+static std::array<short, FFT_STEP_SIZE>* short_buffer;
 
 static boost::circular_buffer<float>* df_plot_circular_buffer;
 static float* df_plot_buffer;
@@ -24,17 +33,12 @@ extern "C"
 void
 Java_re_bass_beatnik_audio_NativeDFProcessor_init(
         JNIEnv* env,
-        jobject object, /* this */
-        jint sampleRate,
-        jint stepSize,
-        jint windowSize
+        jobject object /* this */
 ) {
-    input_buffer = new std::vector<float>((size_t) stepSize);
-    short_buffer = new std::vector<short>((size_t) stepSize);
-    fft = new reBass::FFT_rolling((size_t) windowSize);
-    detection_function = new reBass::CSD_detection_function(
-            (size_t) (windowSize / 2 + 1)
-    );
+    input_buffer = new std::array<float, FFT_STEP_SIZE>();
+    short_buffer = new std::array<short, FFT_STEP_SIZE>;
+    fft = new reBass::FFT_rolling<FFT_WINDOW_LENGTH>;
+    detection_function = new reBass::Broadband_DF<FFT_LENGTH>;
 }
 
 extern "C"
@@ -79,27 +83,29 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
     for (unsigned short i = 0; i < windows_count; i++) {
         env->GetShortArrayRegion(
                 inputArray,
-                i * step_size,
-                step_size,
+                i * (jsize) step_size,
+                (jsize) step_size,
                 short_buffer->data()
         );
 
         std::transform(
-                short_buffer->begin(),
-                short_buffer->end(),
-                input_buffer->begin(),
+                std::cbegin(*short_buffer),
+                std::cend(*short_buffer),
+                std::begin(*input_buffer),
                 [] (short sample) {
                     return (float) sample
                            / (float) std::numeric_limits<short>::max();
                 }
         );
 
-        fft->compute_fft(*input_buffer);
+        fft->compute_fft(std::cbegin(*input_buffer), std::cend(*input_buffer));
+
+
         auto magnitudes = fft->calculate_magnitudes();
 
         output[i] = detection_function->process_magnitudes(magnitudes);
 
-        output[i] /= reBass::CSD_detection_function::DF_OUTPUT_VALUE_MULTIPLIER;
+        output[i] /= DF_OUTPUT_VALUE_MULTIPLIER;
         average += (float) output[i] / windows_count * 2;
     }
 
@@ -109,8 +115,8 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
             || df_plot_buffer != nullptr) {
         df_plot_circular_buffer->push_back(average);
         std::copy(
-            df_plot_circular_buffer->begin(),
-            df_plot_circular_buffer->end(),
+            std::cbegin(*df_plot_circular_buffer),
+            std::cend(*df_plot_circular_buffer),
             df_plot_buffer
         );
     }
@@ -122,8 +128,8 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
         }
 
         std::copy(
-            magnitudes.cbegin(),
-            magnitudes.cbegin() + length,
+            std::cbegin(magnitudes),
+            std::cbegin(magnitudes) + length,
             fft_plot_buffer
         );
     }
@@ -140,14 +146,14 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_calculateMagnitudes(
     env->SetFloatArrayRegion(
             output,
             0,
-            magnitudes.size(),
+            (jsize) magnitudes.size(),
             magnitudes.data()
     );
 }
 
 extern "C"
 void
-Java_re_bass_beatnik_audio_NativeDFProcessor_setDFPlotBuffer(
+Java_re_bass_beatnik_audio_NativeDFProcessor_attachDFPlotBuffer(
         JNIEnv* env,
         jobject object, /* this */
         jobject bufferObject,
@@ -156,7 +162,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_setDFPlotBuffer(
     df_plot_buffer = reinterpret_cast<float*>(env->GetDirectBufferAddress(bufferObject));
     df_plot_circular_buffer = new boost::circular_buffer<float>((unsigned int) length);
     df_plot_circular_buffer->insert(
-            df_plot_circular_buffer->begin(),
+            std::begin(*df_plot_circular_buffer),
             df_plot_circular_buffer->capacity(),
             0.0f
     );
@@ -164,7 +170,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_setDFPlotBuffer(
 
 extern "C"
 void
-Java_re_bass_beatnik_audio_NativeDFProcessor_setFFTPlotBuffer(
+Java_re_bass_beatnik_audio_NativeDFProcessor_attachFFTPlotBuffer(
         JNIEnv* env,
         jobject object, /* this */
         jobject bufferObject,
@@ -173,6 +179,26 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_setFFTPlotBuffer(
     fft_plot_buffer = reinterpret_cast<float*>(env->GetDirectBufferAddress(bufferObject));
     fft_plot_buffer_length = (unsigned int) length;
 }
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_detachDFPlotBuffer(
+        JNIEnv* env,
+        jobject object
+) {
+    df_plot_buffer = nullptr;
+}
+
+extern "C"
+void
+Java_re_bass_beatnik_audio_NativeDFProcessor_detachFFTPlotBuffer(
+        JNIEnv* env,
+        jobject object
+) {
+    fft_plot_buffer = nullptr;
+}
+
+
 
 extern "C"
 void
@@ -185,7 +211,8 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_getFrequencyData(
     env->SetFloatArrayRegion(
             output,
             0,
-            frequencyData.size() * 2,
+            (jsize) frequencyData.size() * 2,
             reinterpret_cast<const float *>(frequencyData.data())
     );
 }
+#pragma clang diagnostic pop

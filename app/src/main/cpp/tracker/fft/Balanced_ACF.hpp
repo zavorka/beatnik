@@ -17,7 +17,7 @@ namespace reBass {
     template <unsigned int N>
     class Balanced_ACF final {
     public:
-        Balanced_ACF() :
+        Balanced_ACF() noexcept :
                 forward_config{
                         kiss_fftr_alloc(2 * N, 0, nullptr, nullptr),
                         kiss_fftr_free
@@ -31,7 +31,7 @@ namespace reBass {
         };
 
         void
-        perform_ACF(std::array<float, N> &buffer)
+        perform_ACF(std::array<float, N> &buffer) noexcept
         {
             inverse_buffer.fill(0);
 
@@ -69,7 +69,7 @@ namespace reBass {
         };
 
         void
-        perform_non_FFT_ACF(std::array<float, N>& buffer) {
+        perform_non_FFT_ACF(std::array<float, N>& buffer) noexcept {
             for (auto lag = 0; lag < N; lag++) {
                 float sum = 0;
                 for (auto n = 0; n < (N - lag); n++) {

@@ -8,11 +8,13 @@ import java.util.List;
 
 import re.bass.beatnik.BeatnikOptions;
 import re.bass.beatnik.Destroyable;
+import re.bass.beatnik.plot.GLPlotView;
 
 /**
  * Created by curly on 24/06/2016.
  */
 
+public class NativeDFProcessor implements DFProcessor, Destroyable
 {
     private final String TAG = "NativeDFProcessor";
 
@@ -24,28 +26,30 @@ import re.bass.beatnik.Destroyable;
             new ArrayList<>();
 
     public NativeDFProcessor(BeatnikOptions options) {
-        sampleRate = options.getSampleRate();
         stepSize = options.getStepSize();
-        windowSize = options.getWindowSize();
-
-        fftBuffer = new float[windowSize + 2];
-        magnitudes = new float[fftBuffer.length / 2];
+        init();
     }
 
-    private native void init(
-            int sampleRate,
-            int stepSize,
-            int windowSize
-    );
+    private native void init();
     private native void dealloc();
     private native void processAudio(
             short[] buffer,
             float[] output
     );
 
-    public native void setDFPlotBuffer(FloatBuffer buffer, int length);
-    public native void setFFTPlotBuffer(FloatBuffer buffer, int length);
+    private native void attachDFPlotBuffer(FloatBuffer buffer, int length);
+    private native void attachFFTPlotBuffer(FloatBuffer buffer, int length);
+    private native void detachDFPlotBuffer();
+    private native void detachFFTPlotBuffer();
 
+    public void attachDFPlotView(GLPlotView plotView) {
+        FloatBuffer buffer = plotView.getPlotBuffer();
+        attachDFPlotBuffer(buffer, buffer.capacity());
+    }
+    public void attachFFTPlotView(GLPlotView plotView) {
+        FloatBuffer buffer = plotView.getPlotBuffer();
+        attachFFTPlotBuffer(buffer, buffer.capacity());
+    }
 
     @Override
     public void onAudio(short[] buffer) {

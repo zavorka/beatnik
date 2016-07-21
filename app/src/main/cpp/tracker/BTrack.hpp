@@ -4,12 +4,17 @@
 
 #pragma once
 
-#include <cstddef>
 #include <array>
 #include <vector>
+#include <experimental/dynarray>
 #include <boost/circular_buffer.hpp>
 
-#include "Balanced_ACF.hpp"
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+
+#include "tracker/fft/Balanced_ACF.hpp"
 #include "RCF_processor.hpp"
 #include "Viterbi_decoder.hpp"
 
@@ -20,8 +25,9 @@ namespace reBass {
                 unsigned int sample_rate,
                 unsigned int step_size
         );
-        float process_DF_sample(float sample);
-        float process_DF_samples(const std::vector<float> &samples);
+        bool process_DF_sample(float sample) noexcept;
+        bool process_DF_samples(const std::vector<float> &samples) noexcept;
+        float get_BPM();
     private:
         static constexpr double TIGHTNESS = 5.0;
         static constexpr double ALPHA = 0.9;
@@ -37,18 +43,23 @@ namespace reBass {
         const unsigned int sample_rate;
         const unsigned int step_size;
         const double tempo_to_lag_factor;
-        const double ray_param;
+        const float ray_param;
 
         std::size_t counter;
         std::size_t countdown;
 
         double beat_period;
+        std::atomic<float> tempo;
+        std::atomic<bool> tempo_changed;
 
         bool should_calculate_periods;
-        bool should_calculate_tempo;
+        std::atomic<bool> should_calculate_tempo;
 
 
         boost::circular_buffer<float> df_buffer;
+        std::array<float, DF_LENGTH> df_copy;
+        std::mutex df_mutex;
+
         //boost::circular_buffer<double> cumulative_score;
         std::array<double, DF_LENGTH> cumulative_score;
         std::array<int, DF_LENGTH> backlink;
@@ -56,23 +67,29 @@ namespace reBass {
         RCF_processor<DF_WINDOW> rcf_processor;
         Viterbi_decoder<RCF_ROWS, RCF_COLUMNS> decoder;
 
-        boost::circular_buffer<std::array<double, RCF_COLUMNS>> rcf_buffer;
-        std::array<std::array<double, RCF_COLUMNS>, RCF_ROWS> rcf_matrix;
+        boost::circular_buffer<std::array<float, RCF_COLUMNS>> rcf_buffer;
+        std::array<std::array<float, RCF_COLUMNS>, RCF_ROWS> rcf_matrix;
+        std::mutex rcf_mutex;
 
         std::vector<int> beats;
         std::array<std::size_t, RCF_ROWS> periods;
 
+        std::thread background_thread;
+        std::condition_variable cv;
+        std::mutex cv_mutex;
+        std::atomic<bool> thread_running;
+
         struct Period_constants {
             const int min_range;
             const int max_range;
-            const int range_length;
+            const unsigned int range_length;
 
             std::vector<double> txwt;
 
             Period_constants(int period)
                     : min_range(-2 * period),
                       max_range((int) round(-0.5 * period)),
-                      range_length(max_range - min_range + 1),
+                      range_length((unsigned int) round(1.5 * period) + 1),
                       txwt(range_length)
             {
                 auto mu = static_cast<double>(period);
@@ -84,8 +101,8 @@ namespace reBass {
 
         std::vector<Period_constants> period_constants;
 
-        float calculate_tempo();
-        void calculate_rcf();
-        void calculate_periods();
+        float calculate_tempo() noexcept;
+        void calculate_rcf() noexcept;
+        void calculate_periods() noexcept;
     };
 }

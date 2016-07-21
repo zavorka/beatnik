@@ -1,11 +1,7 @@
 package re.bass.beatnik.audio;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import re.bass.beatnik.BeatnikOptions;
 
 /**
  * Created by curly on 7/15/16.
@@ -16,26 +12,23 @@ public class BTrack implements DFProcessor.OnProcessorOutputListener
     private static final String TAG = "BTrack";
     private final List<OnNewBPMListener> listeners = new ArrayList<>();
 
-    public BTrack(BeatnikOptions options) {
-        init(options.getSampleRate(), options.getStepSize());
+    public BTrack() {
+        init();
     }
 
-    private native void init(
-            int sampleRate,
-            int stepSize
-    );
+    private native void init();
 
-    private native float processDFSample(float sample);
-    private native float processDFSamples(float[] sample);
+    private native boolean processDFSample(float sample);
+    private native boolean processDFSamples(float[] sample);
+
+    private native float getBpm();
 
     @Override
     public void onProcessorOutput(DFProcessor sender, float[] output) {
-        float bpm = processDFSamples(output);
-        if (!Float.isNaN(bpm)) {
-            notifyOnNewBPMListeners(bpm);
+        if(processDFSamples(output)) {
+           notifyOnNewBPMListeners(getBpm());
         }
     }
-
 
     public interface OnNewBPMListener {
         void onNewBPM(float bpm);

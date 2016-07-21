@@ -20,16 +20,29 @@ namespace reBass
             sample_rate(sample_rate),
             step_size(step_size),
             tempo_to_lag_factor((60. * sample_rate) / step_size),
-            ray_param(floor(tempo_to_lag_factor / DEFAULT_TEMPO)),
+            ray_param((float) floor(tempo_to_lag_factor / DEFAULT_TEMPO)),
             counter(0),
             countdown(DF_LENGTH / DF_WINDOW),
             beat_period(tempo_to_lag_factor / DEFAULT_TEMPO),
+            tempo(NAN),
+            tempo_changed(false),
             should_calculate_periods(false),
             should_calculate_tempo(false),
             df_buffer(DF_LENGTH),
             rcf_processor(ray_param),
             decoder(ray_param),
-            rcf_buffer(RCF_ROWS)
+            rcf_buffer(RCF_ROWS),
+            background_thread([this] {
+                thread_running.store(true);
+                while (thread_running.load()) {
+                    if (should_calculate_tempo) {
+                        calculate_periods();
+                        calculate_tempo();
+                    }
+                    std::unique_lock<std::mutex> cv_lock(cv_mutex);
+                    cv.wait(cv_lock);
+                }
+            })
     {
         df_buffer.insert(
                 df_buffer.begin(),
@@ -40,7 +53,7 @@ namespace reBass
         rcf_buffer.insert(
                 rcf_buffer.begin(),
                 rcf_buffer.capacity(),
-                std::array<double, RCF_COLUMNS>()
+                std::array<float, RCF_COLUMNS>()
         );
 
         for (auto i = 0; i <= df_buffer.size(); i++) {
@@ -57,45 +70,20 @@ namespace reBass
     }
 
     float
-    BTrack::process_DF_sample(float sample)
+    BTrack::get_BPM()
     {
-        // we need to ensure that the onset
-        // detection function sample is positive
-        sample = fabsf(sample) + 0.000001f;
-
-        df_buffer.push_back(sample);
-
-        auto bpm = 0.f;
-
-        if (should_calculate_periods) {
-            calculate_rcf();
-            should_calculate_periods = false;
-        } else if (should_calculate_tempo) {
-            bpm = calculate_tempo();
-            should_calculate_tempo = false;
-        }
-
-        if (counter % DF_STEP == 0) {
-            calculate_rcf();
-        }
-
-
-        if (counter == 0) {
-            if (countdown <= 0) {
-                should_calculate_periods = true;
-            } else {
-                countdown--;
-            }
-        }
-
-        counter = (counter + 1) % DF_WINDOW;
-
-        return bpm;
+        return tempo.load();
     }
 
-    float
-    BTrack::process_DF_samples(const std::vector<float> &samples)
+    bool
+    BTrack::process_DF_sample(float sample) noexcept
     {
+        return process_DF_samples({ sample });
+    }
+
+    bool
+    BTrack::process_DF_samples(const std::vector<float> &samples)
+    noexcept {
         std::for_each(
                 samples.begin(),
                 samples.end(),
@@ -104,58 +92,68 @@ namespace reBass
                 }
         );
 
+        std::unique_lock<std::mutex> df_lock(df_mutex);
         df_buffer.insert(df_buffer.end(), samples.begin(), samples.end());
+        df_lock.unlock();
+
         auto increment = samples.size();
         counter = (counter + increment) % DF_WINDOW;
-
-
-        auto bpm = 0.f;
-
-        if (should_calculate_periods) {
-            calculate_periods();
-            should_calculate_periods = false;
-            should_calculate_tempo = true;
-        } else if (should_calculate_tempo) {
-            bpm = calculate_tempo();
-            should_calculate_tempo = false;
-        }
 
         if (counter % DF_STEP < increment) {
             calculate_rcf();
         }
 
         if (counter % DF_WINDOW < increment) {
-            if (countdown <= 0) {
-                should_calculate_periods = true;
-            } else {
-                countdown--;
-            }
+            should_calculate_tempo.store(true);
+            std::unique_lock<std::mutex> cv_lock(cv_mutex);
+            cv.notify_one();
+            cv_lock.unlock();
         }
 
-        return bpm;
+        auto changed = tempo_changed.load();
+        tempo_changed.store(false);
+
+        return changed;
     }
 
     void
-    BTrack::calculate_rcf() {
-        rcf_buffer.push_back(
-                rcf_processor.get_rcf(
-                        df_buffer.end() - DF_WINDOW
-                )
+    BTrack::calculate_rcf() noexcept
+    {
+        std::unique_lock<std::mutex> df_lock(df_mutex);
+        auto rcf_row = rcf_processor.get_rcf(
+                df_buffer.end() - DF_WINDOW
         );
+        df_lock.unlock();
+
+        std::unique_lock<std::mutex> rcf_lock(rcf_mutex);
+        rcf_buffer.push_back(rcf_row);
+        rcf_lock.unlock();
     }
 
     void
-    BTrack::calculate_periods() {
+    BTrack::calculate_periods() noexcept
+    {
+        std::unique_lock<std::mutex> df_lock(df_mutex);
         std::copy(
-                rcf_buffer.begin(),
-                rcf_buffer.end(),
-                rcf_matrix.begin()
+                std::cbegin(df_buffer),
+                std::cend(df_buffer),
+                std::begin(df_copy)
         );
+        df_lock.unlock();
+
+        std::unique_lock<std::mutex> rcf_lock(rcf_mutex);
+        std::copy(
+                std::cbegin(rcf_buffer),
+                std::cend(rcf_buffer),
+                std::begin(rcf_matrix)
+        );
+        rcf_lock.unlock();
+
         periods = decoder.decode(rcf_matrix);
     }
 
     float
-    BTrack::calculate_tempo()
+    BTrack::calculate_tempo() noexcept
     {
         for (auto i = 0; i < RCF_ROWS; i++) {
             auto &p = period_constants[periods[i] - 1];
@@ -176,7 +174,7 @@ namespace reBass
                 }
 
                 cumulative_score[i * DF_STEP + j] =
-                        ALPHA * max_score + (1. - ALPHA) * df_buffer[i * DF_STEP + j];
+                        ALPHA * max_score + (1. - ALPHA) * df_copy[i * DF_STEP + j];
                 backlink[i * DF_STEP + j] = i * DF_STEP + j + p.min_range + max_index;
             }
         }
@@ -218,6 +216,9 @@ namespace reBass
         while (bpm < MIN_TEMPO) {
             bpm *= 2.0;
         }
+
+        tempo.store(bpm);
+        tempo_changed.store(true);
 
         return bpm;
     }
