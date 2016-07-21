@@ -8,12 +8,12 @@ import android.opengl.GLSurfaceView;
 import android.util.Log;
 
 // This class shows how to use multisampling. To use this, call
-//   myGLSurfaceView.setEGLConfigChooser(new MultisampleConfigChooser());
+// myGLSurfaceView.setEGLConfigChooser(new MultisampleConfigChooser());
 // before calling setRenderer(). Multisampling will probably slow down
 // your app -- measure performance carefully and decide if the vastly
 // improved visual quality is worth the cost.
 public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser {
-    static private final String kTag = "GDC11";
+    static private final String TAG = "GDC11";
     @Override
     public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
         mValue = new int[1];
@@ -82,8 +82,6 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
                 if (numConfigs <= 0) {
                     throw new IllegalArgumentException("No configs match configSpec");
                 }
-            } else {
-                mUsesCoverageAa = true;
             }
         }
 
@@ -106,7 +104,7 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
             }
         }
         if (index == -1) {
-            Log.w(kTag, "Did not find sane config, using first");
+            Log.w(TAG, "Did not find sane config, using first");
         }
         EGLConfig config = configs.length > 0 ? configs[index] : null;
         if (config == null) {
@@ -123,10 +121,5 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
         return defaultValue;
     }
 
-    public boolean usesCoverageAa() {
-        return mUsesCoverageAa;
-    }
-
     private int[] mValue;
-    private boolean mUsesCoverageAa;
 }

@@ -13,25 +13,14 @@ import re.bass.beatnik.Destroyable;
  * Created by curly on 24/06/2016.
  */
 
-public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
 {
     private final String TAG = "NativeDFProcessor";
 
     private final int stepSize;
-    private final int windowSize;
-    private final int sampleRate;
-    private boolean initialized = false;
-
-    private final float[] fftBuffer;
-    private boolean fftBufferUpToDate = false;
-    private final float[] magnitudes;
-    private boolean magnitudesUpToDate = false;
 
     private float[] dfOutput;
 
     private final List<OnProcessorOutputListener> outputListeners =
-            new ArrayList<>();
-    private final List<OnNewFFTDataListener> fftListeners =
             new ArrayList<>();
 
     public NativeDFProcessor(BeatnikOptions options) {
@@ -53,29 +42,13 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
             short[] buffer,
             float[] output
     );
-    private native void getFrequencyData(
-            float[] buffer
-    );
-    private native void calculateMagnitudes(
-            float[] buffer
-    );
 
     public native void setDFPlotBuffer(FloatBuffer buffer, int length);
     public native void setFFTPlotBuffer(FloatBuffer buffer, int length);
 
-    @Override
-    public void onStart() {
-        init(sampleRate, stepSize, windowSize);
-        Log.v(TAG, "Initialized.");
-        this.initialized = true;
-    }
 
     @Override
     public void onAudio(short[] buffer) {
-        if (!initialized) {
-            throw new RuntimeException("Not initialized yet.");
-        }
-
         if (dfOutput == null || dfOutput.length != (buffer.length / stepSize)) {
             dfOutput = new float[buffer.length / stepSize];
         }
@@ -85,10 +58,6 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
                 dfOutput
         );
 
-        fftBufferUpToDate = false;
-        magnitudesUpToDate = false;
-
-        notifyFFTDataListeners();
         notifyOutputListeners();
     }
 
@@ -116,60 +85,6 @@ public class NativeDFProcessor implements DFProcessor, FFTProcessor, Destroyable
         synchronized (outputListeners) {
             outputListeners.remove(listener);
         }
-    }
-
-    private void notifyFFTDataListeners() {
-        synchronized (fftListeners) {
-            for (OnNewFFTDataListener listener : fftListeners) {
-                listener.onNewFFTData(this);
-            }
-        }
-    }
-
-    @Override
-    public void addOnNewFFTDataListener(
-            OnNewFFTDataListener listener
-    ) {
-        synchronized (fftListeners) {
-            fftListeners.add(listener);
-        }
-    }
-
-    @Override
-    public void removeOnNewFFTDataListener(
-            OnNewFFTDataListener listener
-    ) {
-        synchronized (fftListeners) {
-            fftListeners.remove(listener);
-        }
-    }
-
-    @Override
-    public float[] getFFTBuffer() {
-        if (!fftBufferUpToDate) {
-            getFrequencyData(fftBuffer);
-            fftBufferUpToDate = true;
-        }
-        return fftBuffer;
-    }
-
-    @Override
-    public float[] getMagnitudes() {
-        if (!magnitudesUpToDate) {
-            calculateMagnitudes(magnitudes);
-            magnitudesUpToDate = true;
-        }
-        return magnitudes;
-    }
-
-    @Override
-    public int getWindowSize() {
-        return windowSize;
-    }
-
-    @Override
-    public int getFFTSize() {
-        return getWindowSize() / 2 + 1;
     }
 
     @Override

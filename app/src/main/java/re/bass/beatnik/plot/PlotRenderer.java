@@ -41,8 +41,6 @@ public class PlotRenderer implements GLSurfaceView.Renderer
     private static final float[] WHITE = new float[] { 1.0f, 1.0f, 1.0f, 1.0f };
 
     private final int pointsCount;
-    private final float[] points;
-    private final float[] scaledPoints;
 
     private final FloatBuffer xBuffer;
     private int xHandle;
@@ -53,13 +51,8 @@ public class PlotRenderer implements GLSurfaceView.Renderer
 
     private int program;
 
-    private int width;
-    private int height;
-
     public PlotRenderer(int pointsCount) {
         this.pointsCount = pointsCount;
-        points = new float[this.pointsCount];
-        scaledPoints = new float[this.pointsCount];
 
         ByteBuffer buffer = ByteBuffer
                 .allocateDirect(pointsCount * STRIDE);
@@ -120,8 +113,6 @@ public class PlotRenderer implements GLSurfaceView.Renderer
     @Override
     public void onSurfaceChanged(GL10 gl10, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
-        this.width = width;
-        this.height = height;
     }
 
     @Override
@@ -155,7 +146,7 @@ public class PlotRenderer implements GLSurfaceView.Renderer
 
         GLES20.glLineWidth(5.0f);
 
-        synchronized (this) {
+        synchronized (yBuffer) {
             GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, pointsCount);
         }
 
