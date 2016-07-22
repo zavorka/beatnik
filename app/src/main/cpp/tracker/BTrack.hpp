@@ -89,7 +89,7 @@ namespace reBass {
             Period_constants(int period)
                     : min_range(-2 * period),
                       max_range((int) round(-0.5 * period)),
-                      range_length((unsigned int) round(1.5 * period) + 1),
+                      range_length((unsigned int) max_range - min_range + 1),
                       txwt(range_length)
             {
                 auto mu = static_cast<double>(period);

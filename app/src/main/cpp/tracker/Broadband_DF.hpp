@@ -61,7 +61,7 @@ namespace reBass
                 previous_magnitude[i] = squared_magnitude;
             }
 
-            return val;
+            return val / FFTLength;
         };
 
         std::array<float, FFTLength> magnitudes;

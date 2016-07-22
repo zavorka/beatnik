@@ -27,7 +27,7 @@ static boost::circular_buffer<float>* df_plot_circular_buffer;
 static float* df_plot_buffer;
 
 static float* fft_plot_buffer;
-static unsigned int fft_plot_buffer_length;
+static std::size_t fft_plot_buffer_length;
 
 extern "C"
 void
@@ -104,9 +104,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
         auto magnitudes = fft->calculate_magnitudes();
 
         output[i] = detection_function->process_magnitudes(magnitudes);
-
-        output[i] /= DF_OUTPUT_VALUE_MULTIPLIER;
-        average += (float) output[i] / windows_count * 2;
+        average += (float) output[i] / windows_count;
     }
 
     env->ReleaseFloatArrayElements(outputArray, output, 0);
@@ -124,7 +122,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_processAudio(
         auto magnitudes = fft->calculate_magnitudes();
         auto length = fft_plot_buffer_length;
         if (magnitudes.size() < length) {
-            length = (unsigned int) magnitudes.size();
+            length = magnitudes.size();
         }
 
         std::copy(
@@ -187,6 +185,7 @@ Java_re_bass_beatnik_audio_NativeDFProcessor_detachDFPlotBuffer(
         jobject object
 ) {
     df_plot_buffer = nullptr;
+    delete df_plot_circular_buffer;
 }
 
 extern "C"

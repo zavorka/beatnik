@@ -8,7 +8,6 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
 static reBass::BTrack* bTrack;
-static auto multiplier = reBass::constants::DF_OUTPUT_VALUE_MULTIPLIER;
 
 extern "C"
 void
@@ -36,7 +35,7 @@ Java_re_bass_beatnik_audio_BTrack_processDFSample(
         jobject object, /* this */
         jfloat dfValue
 ) {
-    return bTrack->process_DF_sample(dfValue * multiplier);
+    return bTrack->process_DF_sample(dfValue);
 }
 
 extern "C"
@@ -51,7 +50,7 @@ Java_re_bass_beatnik_audio_BTrack_processDFSamples(
 
     auto values_vector = std::vector<float>((std::size_t) length);
     for (jsize i = 0; i < length; i++) {
-        values_vector[i] = (values[i] *= multiplier);
+        values_vector[i] = (values[i]);
     }
     env->ReleaseFloatArrayElements(valuesArray, values, JNI_ABORT);
 

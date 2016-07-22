@@ -84,16 +84,15 @@ namespace reBass
     bool
     BTrack::process_DF_samples(const std::vector<float> &samples)
     noexcept {
-        std::for_each(
+        std::unique_lock<std::mutex> df_lock(df_mutex);
+        std::transform(
                 samples.begin(),
                 samples.end(),
+                std::back_inserter(df_buffer),
                 [](float sample) {
                     return sample + 0.0001f;
                 }
         );
-
-        std::unique_lock<std::mutex> df_lock(df_mutex);
-        df_buffer.insert(df_buffer.end(), samples.begin(), samples.end());
         df_lock.unlock();
 
         auto increment = samples.size();
@@ -155,6 +154,8 @@ namespace reBass
     float
     BTrack::calculate_tempo() noexcept
     {
+        cumulative_score.fill(0);
+        backlink.fill(0);
         for (auto i = 0; i < RCF_ROWS; i++) {
             auto &p = period_constants[periods[i] - 1];
 
