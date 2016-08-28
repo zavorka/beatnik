@@ -1,5 +1,7 @@
 package re.bass.beatnik.audio;
 
+import java.nio.ShortBuffer;
+
 import re.bass.beatnik.Startable;
 
 public interface AudioInput extends Startable {
@@ -11,6 +13,6 @@ public interface AudioInput extends Startable {
     int getFrameSize();
 
     interface AudioListener {
-        void onAudio(short[] buffer);
+        void onAudio(final ShortBuffer buffer);
     }
 }

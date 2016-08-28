@@ -12,20 +12,17 @@ import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import re.bass.beatnik.BeatnikOptions;
+import java.nio.ShortBuffer;
+
 import re.bass.beatnik.BuildConfig;
 import re.bass.beatnik.R;
 import re.bass.beatnik.audio.AudioInput;
-import re.bass.beatnik.audio.BTrack;
-import re.bass.beatnik.audio.DFProcessor;
+import re.bass.beatnik.audio.Beatnik;
 import re.bass.beatnik.audio.Microphone;
-import re.bass.beatnik.audio.NativeDFProcessor;
 import re.bass.beatnik.plot.GLPlotView;
 import re.bass.beatnik.plot.PlotUpdater;
 
-public class MainActivity
-        extends Activity
-        implements BTrack.OnNewBPMListener
+public class MainActivity extends Activity
 {
     private final static String TAG = "MainActivity";
 
@@ -34,16 +31,12 @@ public class MainActivity
     }
 
     private AudioInput input;
-    private NativeDFProcessor processor;
-    @SuppressWarnings("FieldCanBeLocal")
-    private BTrack bTrack;
     private PlotUpdater plotUpdater;
 
     private RelativeLayout content;
     private TextView bpmNumberText;
 	private TextView bpmUnitText;
     private TextView fuckOffText;
-    private GLPlotView dfView;
     private GLPlotView fftView;
 
     @Override
@@ -57,7 +50,6 @@ public class MainActivity
         bpmNumberText = (TextView) findViewById(R.id.bpm_number_text);
         bpmUnitText = (TextView) findViewById(R.id.bpm_unit_text);
         fuckOffText = (TextView) findViewById(R.id.fuck_off_text);
-        dfView = (GLPlotView) findViewById(R.id.df_view);
         fftView = (GLPlotView) findViewById(R.id.fft_view);
         fuckOffText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,34 +86,30 @@ public class MainActivity
     protected void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy()");
-        processor.destroy();
     }
 
     private void initialize() {
         Log.v(TAG, "initialize()");
         bpmNumberText.setText(R.string.app_name);
 
-        final BeatnikOptions options = new BeatnikOptions();
-        input = new Microphone(options);
-        processor = new NativeDFProcessor(options);
-        bTrack = new BTrack();
+        Beatnik.clear();
+        input = new Microphone(
+                Beatnik.getRequiredSampleRate(),
+                Beatnik.getRequiredStepSize()
+        );
 
-        input.addListener(processor);
-
-        processor.attachFFTPlotView(fftView);
-        processor.attachDFPlotView(dfView);
-        processor.addOnDFProcessorOutputListener(new DFProcessor.OnProcessorOutputListener() {
+        input.addListener(new AudioInput.AudioListener() {
             @Override
-            public void onProcessorOutput(DFProcessor sender, float[] output) {
+            public void onAudio(final ShortBuffer buffer) {
+                if (Beatnik.process(buffer)) {
+                    onNewBPM(Beatnik.getCurrentTempo());
+                }
                 plotUpdater.requestRender();
             }
         });
 
-        processor.addOnDFProcessorOutputListener(bTrack);
-        bTrack.addOnNewBPMListener(this);
-
+        Beatnik.attachFFTPlotBuffer(fftView.getPlotBuffer());
         plotUpdater = new PlotUpdater();
-        plotUpdater.addGlSurfaceView(dfView);
         plotUpdater.addGlSurfaceView(fftView);
     }
 
@@ -140,7 +128,6 @@ public class MainActivity
         getRecordingPermissionAndStart();
     }
 
-    @Override
     public void onNewBPM(final float bpm) {
         runOnUiThread(new Runnable() {
             @Override

@@ -8,6 +8,7 @@
 .DS_Store
 /build
 /captures
+app/.externalNativeBuild
 app/externalNativeBuild
 *.apk
 app/src/main/cpp/.idea

@@ -1,0 +1,3 @@
+[submodule "app/src/main/cpp/external/beatnik"]
+	path = app/src/main/cpp/external/beatnik
+	url = https://github.com/reBass/libbeatnik

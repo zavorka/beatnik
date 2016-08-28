@@ -52,14 +52,6 @@
 		</LinearLayout>
 
 		<re.bass.beatnik.plot.GLPlotView
-		    android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@+id/bpm_layout"
-            android:layout_centerHorizontal="true"
-            android:layout_marginBottom="60dp"
-            android:id="@+id/df_view"/>
-
-		<re.bass.beatnik.plot.GLPlotView
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:layout_below="@+id/bpm_layout"

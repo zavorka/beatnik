@@ -18,7 +18,7 @@ public class GLPlotView extends GLSurfaceView
 {
     private static final String TAG = "GLPlotView";
 
-    protected static final int MAX_POINTS = 256;
+    protected static final int POINTS_COUNT = 256;
     protected final PlotRenderer renderer;
 
     public GLPlotView(Context context) {
@@ -31,7 +31,7 @@ public class GLPlotView extends GLSurfaceView
         // Create an OpenGL ES 2.0 context
         setEGLContextClientVersion(2);
 
-        renderer = new PlotRenderer(MAX_POINTS);
+        renderer = new PlotRenderer(POINTS_COUNT);
 
         Log.v(TAG, Build.MODEL);
         if (android.os.Build.MODEL.equals("Android SDK built for x86_64")) {
