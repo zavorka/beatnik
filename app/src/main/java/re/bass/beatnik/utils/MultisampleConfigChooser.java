@@ -12,7 +12,9 @@ import android.util.Log;
 // before calling setRenderer(). Multisampling will probably slow down
 // your app -- measure performance carefully and decide if the vastly
 // improved visual quality is worth the cost.
-public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser {
+public class MultisampleConfigChooser
+        implements GLSurfaceView.EGLConfigChooser
+{
     static private final String TAG = "GDC11";
     @Override
     public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
@@ -24,7 +26,6 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
                 EGL10.EGL_GREEN_SIZE, 6,
                 EGL10.EGL_BLUE_SIZE, 5,
                 EGL10.EGL_DEPTH_SIZE, 16,
-                // Requires that setEGLContextClientVersion(2) is called on the view.
                 EGL10.EGL_RENDERABLE_TYPE, 4 /* EGL_OPENGL_ES2_BIT */,
                 EGL10.EGL_SAMPLE_BUFFERS, 1 /* true */,
                 EGL10.EGL_SAMPLES, 2,
@@ -52,13 +53,15 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
                     EGL10.EGL_DEPTH_SIZE, 16,
                     EGL10.EGL_RENDERABLE_TYPE, 4 /* EGL_OPENGL_ES2_BIT */,
                     EGL_COVERAGE_BUFFERS_NV, 1 /* true */,
-                    EGL_COVERAGE_SAMPLES_NV, 2,  // always 5 in practice on tegra 2
+                    EGL_COVERAGE_SAMPLES_NV, 2,  // always 5 on tegra 2
                     EGL10.EGL_NONE
             };
 
             if (!egl.eglChooseConfig(display, configSpec, null, 0,
                     mValue)) {
-                throw new IllegalArgumentException("2nd eglChooseConfig failed");
+                throw new IllegalArgumentException(
+                        "2nd eglChooseConfig failed"
+                );
             }
             numConfigs = mValue[0];
 
@@ -75,12 +78,16 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
 
                 if (!egl.eglChooseConfig(display, configSpec, null, 0,
                         mValue)) {
-                    throw new IllegalArgumentException("3rd eglChooseConfig failed");
+                    throw new IllegalArgumentException(
+                            "3rd eglChooseConfig failed"
+                    );
                 }
                 numConfigs = mValue[0];
 
                 if (numConfigs <= 0) {
-                    throw new IllegalArgumentException("No configs match configSpec");
+                    throw new IllegalArgumentException(
+                            "No configs match configSpec"
+                    );
                 }
             }
         }
@@ -98,7 +105,15 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
         // You need to explicitly filter the data returned by eglChooseConfig!
         int index = -1;
         for (int i = 0; i < configs.length; ++i) {
-            if (findConfigAttrib(egl, display, configs[i], EGL10.EGL_RED_SIZE, 0) == 5) {
+            int configAttribute = findConfigAttribute(
+                egl,
+                display,
+                configs[i],
+                EGL10.EGL_RED_SIZE,
+                0
+            );
+
+            if (configAttribute == 5) {
                 index = i;
                 break;
             }
@@ -113,8 +128,13 @@ public class MultisampleConfigChooser implements GLSurfaceView.EGLConfigChooser 
         return config;
     }
 
-    private int findConfigAttrib(EGL10 egl, EGLDisplay display,
-                                 EGLConfig config, int attribute, int defaultValue) {
+    private int findConfigAttribute(
+            EGL10 egl,
+            EGLDisplay display,
+            EGLConfig config,
+            int attribute,
+            int defaultValue
+    ) {
         if (egl.eglGetConfigAttrib(display, config, attribute, mValue)) {
             return mValue[0];
         }

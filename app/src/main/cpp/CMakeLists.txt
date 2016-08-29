@@ -11,7 +11,10 @@ include_directories(BEFORE
 #endif ()
 
 set(SRC
-        beatnik_jni.cpp
+    external/beatnik/external/GSL/include
+    external/beatnik/include
+
+    beatnik_jni.cpp
 )
 add_library(beatnik SHARED ${SRC})
 
