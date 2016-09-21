@@ -5,10 +5,17 @@
 
 using namespace reBass;
 
+static constexpr int FFT_SIZE = 1024;
+static constexpr int FFT_STEP = 128;
+static constexpr int ODF_SIZE = 512;
+static constexpr int ODF_STEP = 128;
+static constexpr int SAMPLE_RATE = 44100;
 
-static constexpr unsigned SAMPLE_RATE = 44100;
-static Beatnik<> beatnik(SAMPLE_RATE);
+using Beatnik_t = Beatnik<float, FFT_SIZE, FFT_STEP, ODF_SIZE, ODF_STEP>;
+
+static Beatnik_t beatnik(SAMPLE_RATE);
 static gsl::span<float> fft_plot_buffer;
+static std::array<float, FFT_STEP> float_buffer;
 
 template <typename T>
 static
@@ -33,14 +40,25 @@ bool Java_re_bass_beatnik_audio_Beatnik_process(
 ) noexcept {
     auto input_buffer = span_from_direct_buffer<short const>(env, bufferObject);
 
-    assert(input_buffer.size() % beatnik.fft_step == 0);
+    assert(std::size(input_buffer) % beatnik.fft_step == 0);
     auto new_tempo = false;
-    for (auto i = 0; i < input_buffer.size(); i += beatnik.fft_step) {
-        new_tempo = new_tempo ||
-                beatnik.process(input_buffer.subspan<beatnik.fft_step>(i));
+    for (auto i = 0; i < std::size(input_buffer); i += FFT_STEP) {
+        auto step = input_buffer.subspan<FFT_STEP>(i);
+        std::transform(
+            std::cbegin(step),
+            std::cend(step),
+            std::begin(float_buffer),
+            [] (short sample) {
+                return
+                    static_cast<float>(sample)
+                    / static_cast<float>(std::numeric_limits<short>::max());
+            }
+        );
+
+        new_tempo = new_tempo || beatnik.process(float_buffer);
     }
 
-    auto magnitudes = beatnik.get_magnitudes();
+    auto magnitudes = beatnik.get_fft_magnitudes();
     std::copy(
         std::cbegin(magnitudes),
         std::cbegin(magnitudes)
@@ -59,9 +77,9 @@ noexcept {
 }
 
 extern "C"
-jfloat Java_re_bass_beatnik_audio_Beatnik_getCurrentTempo(JNIEnv*, jobject)
+jfloat Java_re_bass_beatnik_audio_Beatnik_estimateTempo(JNIEnv*, jobject)
 {
-    return beatnik.get_current_tempo();
+    return beatnik.estimate_tempo();
 }
 
 extern "C"
@@ -82,5 +100,5 @@ jint Java_re_bass_beatnik_audio_Beatnik_getRequiredSampleRate(JNIEnv*, jobject)
 extern "C"
 jint Java_re_bass_beatnik_audio_Beatnik_getRequiredStepSize(JNIEnv*, jobject)
 {
-    return beatnik.fft_step;
+    return FFT_STEP;
 }

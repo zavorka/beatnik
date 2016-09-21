@@ -42,7 +42,7 @@ public class MainActivity extends Activity
     private final static String TAG = "MainActivity";
 
     static {
-        System.loadLibrary("beatnik");
+        System.loadLibrary("beatnik_jni");
     }
 
     private AudioInput input;
@@ -117,7 +117,7 @@ public class MainActivity extends Activity
             @Override
             public void onAudio(final ShortBuffer buffer) {
                 if (Beatnik.process(buffer)) {
-                    onNewBPM(Beatnik.getCurrentTempo());
+                    onNewBPM(Beatnik.estimateTempo());
                 }
                 plotUpdater.requestRender();
             }

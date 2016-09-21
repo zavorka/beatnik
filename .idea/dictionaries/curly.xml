@@ -11,6 +11,7 @@
       <w>hanning</w>
       <w>mediump</w>
       <w>startable</w>
+      <w>viterbi</w>
       <w>wextra</w>
       <w>wunused</w>
     </words>

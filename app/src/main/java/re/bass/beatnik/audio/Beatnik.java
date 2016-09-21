@@ -21,7 +21,7 @@ import java.nio.FloatBuffer;
 public class Beatnik {
     public static native void clear();
     public static native boolean process(final ShortBuffer input);
-    public static native float getCurrentTempo();
+    public static native float estimateTempo();
     public static native void attachFFTPlotBuffer(FloatBuffer plot);
     public static native int getRequiredSampleRate();
     public static native int getRequiredStepSize();

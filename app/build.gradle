@@ -13,6 +13,7 @@ android {
         ndkConfig.abiFilters 'armeabi-v7a', 'arm64-v8a'
         externalNativeBuild {
             cmake {
+                targets 'beatnik_jni'
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_TOOLCHAIN=clang'
                 cppFlags '-fexceptions', '-std=c++1z', '-Wall', '-Wextra',
                          '-Wno-unused-parameter'
