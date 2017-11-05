@@ -1,5 +1,7 @@
 # beatnik
-re.bass.beatnik Android app
+[re.bass.beatnik](https://play.google.com/store/apps/details?id=re.bass.beatnik) Android app
+
+![re.bass.beatnik](https://lh3.googleusercontent.com/YR5kk3hFdgUHjOWEEMfDA1AIlE2ta8gTlAPjq1cUA7zOf7iYDNeyOaqt_ar-dN17=h310-rw)
 
 ### Prerequisities
 * Android Studio 2.2 Preview 3+
